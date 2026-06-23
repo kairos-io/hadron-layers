@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Updatecli
-        uses: updatecli/updatecli-action@v3
+        uses: updatecli/updatecli-action@v3.3.0
 
       - name: Run Updatecli
         env:
