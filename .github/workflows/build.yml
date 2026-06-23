@@ -133,7 +133,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push ${{ matrix.layer }} layer
-        uses: docker/bake-action@v6
+        uses: docker/bake-action@v7
         with:
           targets: ${{ matrix.layer }}
           push: ${{ github.event_name != 'pull_request' }}
