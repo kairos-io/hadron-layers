@@ -15,6 +15,14 @@ permissions:
   contents: read
   packages: write
 
+# Serialize runs per ref so only one main build runs at a time.
+# Pushes to main queue and run in order (cancel-in-progress: false) to avoid
+# cache races and older images overwriting newer ones. Pull request runs cancel
+# their own superseded runs to save resources.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Auto-discover layer directories and determine which ones need rebuilding.
   # A layer is rebuilt when its own directory, docker-bake.hcl, or this
