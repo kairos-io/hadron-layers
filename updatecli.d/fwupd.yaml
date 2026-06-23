@@ -1,0 +1,203 @@
+---
+name: fwupd layer version updates
+
+scms:
+  github:
+    kind: github
+    spec:
+      user: "ci-robbot"
+      email: "robot@c3os.io"
+      owner: kairos-io
+      repository: hadron-layers
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      branch: main
+      commitmessage:
+        title: "chore(fwupd): bump fwupd layer dependencies"
+
+sources:
+  fwupd:
+    kind: githubrelease
+    spec:
+      owner: fwupd
+      repository: fwupd
+    transformers:
+      - trimprefix: v
+
+  glib:
+    kind: githubrelease
+    spec:
+      owner: GNOME
+      repository: glib
+    transformers:
+      - trimprefix: v
+
+  pcre2:
+    kind: githubrelease
+    spec:
+      owner: PCRE2Project
+      repository: pcre2
+    transformers:
+      - trimprefix: pcre2-
+
+  libxmlb:
+    kind: githubrelease
+    spec:
+      owner: hughsie
+      repository: libxmlb
+    transformers:
+      - trimprefix: v
+
+  libusb:
+    kind: githubrelease
+    spec:
+      owner: libusb
+      repository: libusb
+    transformers:
+      - trimprefix: v
+
+  libjcat:
+    kind: githubrelease
+    spec:
+      owner: hughsie
+      repository: libjcat
+    transformers:
+      - trimprefix: v
+
+  json_glib:
+    kind: githubrelease
+    spec:
+      owner: GNOME
+      repository: json-glib
+    transformers:
+      - trimprefix: v
+
+  sqlite3:
+    kind: gittag
+    spec:
+      url: https://github.com/sqlite/sqlite.git
+      lsremote: true
+      versionfilter:
+        kind: regex/semver
+        regex: '^version-([0-9]+\.[0-9]+\.[0-9]+)$'
+        pattern: "*"
+    transformers:
+      - trimprefix: version-
+
+  libffi:
+    kind: githubrelease
+    spec:
+      owner: libffi
+      repository: libffi
+    transformers:
+      - trimprefix: v
+
+targets:
+  fwupd_version:
+    name: "FWUPD_VERSION in fwupd/Dockerfile updated to {{ source "fwupd" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: FWUPD_VERSION
+    sourceid: fwupd
+
+  glib_version:
+    name: "GLIB_VERSION in fwupd/Dockerfile updated to {{ source "glib" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: GLIB_VERSION
+    sourceid: glib
+
+  pcre2_version:
+    name: "PCRE2_VERSION in fwupd/Dockerfile updated to {{ source "pcre2" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: PCRE2_VERSION
+    sourceid: pcre2
+
+  libxmlb_version:
+    name: "LIBXMLB_VERSION in fwupd/Dockerfile updated to {{ source "libxmlb" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBXMLB_VERSION
+    sourceid: libxmlb
+
+  libusb_version:
+    name: "LIBUSB_VERSION in fwupd/Dockerfile updated to {{ source "libusb" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBUSB_VERSION
+    sourceid: libusb
+
+  libjcat_version:
+    name: "LIBJCAT_VERSION in fwupd/Dockerfile updated to {{ source "libjcat" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBJCAT_VERSION
+    sourceid: libjcat
+
+  json_glib_version:
+    name: "JSON_GLIB_VERSION in fwupd/Dockerfile updated to {{ source "json_glib" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: JSON_GLIB_VERSION
+    sourceid: json_glib
+
+  sqlite3_version:
+    name: "SQLITE3_VERSION in fwupd/Dockerfile updated to {{ source "sqlite3" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: SQLITE3_VERSION
+    sourceid: sqlite3
+
+  libffi_version:
+    name: "LIBFFI_VERSION in fwupd/Dockerfile updated to {{ source "libffi" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: fwupd/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBFFI_VERSION
+    sourceid: libffi
+
+pullrequests:
+  fwupd:
+    kind: github
+    scmid: github
+    title: "chore(fwupd): automatic dependency version bumps"
+    spec:
+      automerge: false
+      labels:
+        - "automated"
+        - "fwupd"

@@ -1,0 +1,177 @@
+---
+name: GPG layer version updates
+
+scms:
+  github:
+    kind: github
+    spec:
+      user: "ci-robbot"
+      email: "robot@c3os.io"
+      owner: kairos-io
+      repository: hadron-layers
+      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
+      branch: main
+      commitmessage:
+        title: "chore(gpg): bump gpg layer dependencies"
+
+sources:
+  gnupg:
+    kind: gittag
+    spec:
+      url: https://github.com/gpg/gnupg.git
+      versionfilter:
+        kind: semver
+        pattern: "*"
+    transformers:
+      - trimprefix: gnupg-
+
+  libgpg_error:
+    kind: gittag
+    spec:
+      url: https://github.com/gpg/libgpg-error.git
+      versionfilter:
+        kind: semver
+        pattern: "*"
+    transformers:
+      - trimprefix: libgpg-error-
+
+  libgcrypt:
+    kind: gittag
+    spec:
+      url: https://github.com/gpg/libgcrypt.git
+      versionfilter:
+        kind: semver
+        pattern: "*"
+    transformers:
+      - trimprefix: libgcrypt-
+
+  libassuan:
+    kind: gittag
+    spec:
+      url: https://github.com/gpg/libassuan.git
+      versionfilter:
+        kind: semver
+        pattern: "*"
+    transformers:
+      - trimprefix: libassuan-
+
+  libksba:
+    kind: gittag
+    spec:
+      url: https://github.com/gpg/libksba.git
+      versionfilter:
+        kind: semver
+        pattern: "*"
+    transformers:
+      - trimprefix: libksba-
+
+  npth:
+    kind: gittag
+    spec:
+      url: https://github.com/gpg/npth.git
+      versionfilter:
+        kind: semver
+        pattern: "*"
+    transformers:
+      - trimprefix: npth-
+
+  sqlite3:
+    kind: gittag
+    spec:
+      url: https://github.com/sqlite/sqlite.git
+      lsremote: true
+      versionfilter:
+        kind: regex/semver
+        regex: '^version-([0-9]+\.[0-9]+\.[0-9]+)$'
+        pattern: "*"
+    transformers:
+      - trimprefix: version-
+
+targets:
+  gnupg_version:
+    name: "GNUPG_VERSION in gpg/Dockerfile updated to {{ source "gnupg" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: gpg/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: GNUPG_VERSION
+    sourceid: gnupg
+
+  libgpg_error_version:
+    name: "LIBGPG_ERROR_VERSION in gpg/Dockerfile updated to {{ source "libgpg_error" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: gpg/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBGPG_ERROR_VERSION
+    sourceid: libgpg_error
+
+  libgcrypt_version:
+    name: "LIBGCRYPT_VERSION in gpg/Dockerfile updated to {{ source "libgcrypt" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: gpg/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBGCRYPT_VERSION
+    sourceid: libgcrypt
+
+  libassuan_version:
+    name: "LIBASSUAN_VERSION in gpg/Dockerfile updated to {{ source "libassuan" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: gpg/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBASSUAN_VERSION
+    sourceid: libassuan
+
+  libksba_version:
+    name: "LIBKSBA_VERSION in gpg/Dockerfile updated to {{ source "libksba" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: gpg/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBKSBA_VERSION
+    sourceid: libksba
+
+  npth_version:
+    name: "NPTH_VERSION in gpg/Dockerfile updated to {{ source "npth" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: gpg/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: NPTH_VERSION
+    sourceid: npth
+
+  sqlite3_version:
+    name: "SQLITE3_VERSION in gpg/Dockerfile updated to {{ source "sqlite3" }}"
+    kind: dockerfile
+    scmid: github
+    spec:
+      file: gpg/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: SQLITE3_VERSION
+    sourceid: sqlite3
+
+pullrequests:
+  gpg:
+    kind: github
+    scmid: github
+    title: "chore(gpg): automatic dependency version bumps"
+    spec:
+      automerge: false
+      labels:
+        - "automated"
+        - "gpg"

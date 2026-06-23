@@ -1,0 +1,35 @@
+name: Updatecli
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run once a day at midnight UTC
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  updatecli:
+    name: Bump ${{ matrix.config }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - toolchain
+          - git
+          - gpg
+          - fwupd
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Updatecli
+        uses: updatecli/updatecli-action@v3
+
+      - name: Run Updatecli
+        env:
+          UPDATECLI_GITHUB_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+        run: updatecli apply --config updatecli.d/${{ matrix.config }}.yaml
