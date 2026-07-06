@@ -36,7 +36,7 @@ jobs:
           # Ensure fork exists
           if ! gh repo view ci-forks/hadron-layers --json name > /dev/null 2>&1; then
             echo "Fork does not exist. Creating fork..."
-            gh repo fork kairos-io/hadron-layers --clone=false --remote=false --org ci-forks
+            gh repo fork kairos-io/hadron-layers --clone=false --org ci-forks
           else
             echo "Fork already exists."
           fi
