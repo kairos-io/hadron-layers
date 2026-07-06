@@ -9,23 +9,23 @@ RUN mkdir -p /output
 WORKDIR /sources
 
 # fwupd
-ARG FWUPD_VERSION=2.0.17
+ARG FWUPD_VERSION=2.1.6
 RUN curl -L https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fwupd-${FWUPD_VERSION}.tar.xz -o fwupd.tar.xz
 
 # glib
-ARG GLIB_VERSION=2.86.2
+ARG GLIB_VERSION=2.89.1
 RUN curl -L https://download.gnome.org/sources/glib/2.86/glib-${GLIB_VERSION}.tar.xz -o glib.tar.xz
 
 ARG PCRE2_VERSION=10.47
 RUN curl -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz -o pcre2.tar.gz
 
-ARG LIBXMLB_VERSION=0.3.24
+ARG LIBXMLB_VERSION=0.3.28
 RUN curl -L https://github.com/hughsie/libxmlb/releases/download/${LIBXMLB_VERSION}/libxmlb-${LIBXMLB_VERSION}.tar.xz -o libxmlb.tar.xz
 
-ARG LIBUSB_VERSION=1.0.29
+ARG LIBUSB_VERSION=1.0.30
 RUN curl -L https://github.com/libusb/libusb/releases/download/v${LIBUSB_VERSION}/libusb-${LIBUSB_VERSION}.tar.bz2 -o libusb.tar.bz2
 
-ARG LIBJCAT_VERSION=0.2.5
+ARG LIBJCAT_VERSION=0.2.6
 RUN curl -L https://github.com/hughsie/libjcat/releases/download/${LIBJCAT_VERSION}/libjcat-${LIBJCAT_VERSION}.tar.xz -o libjcat.tar.xz
 
 ARG JSON_GLIB_VERSION=1.10.8
@@ -34,10 +34,10 @@ RUN curl -L https://gitlab.gnome.org/GNOME/json-glib/-/archive/${JSON_GLIB_VERSI
 ARG GETTEXT_VERSION=1.0
 RUN curl -L https://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext.tar.gz
 
-ARG SQLITE3_VERSION=3.51.2
+ARG SQLITE3_VERSION=3.53.3
 RUN curl -L https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
 
-ARG LIBFFI_VERSION=3.5.2
+ARG LIBFFI_VERSION=3.6.0
 RUN curl -L https://github.com/libffi/libffi/releases/download/v${LIBFFI_VERSION}/libffi-${LIBFFI_VERSION}.tar.gz -o libffi.tar.gz
 
 
