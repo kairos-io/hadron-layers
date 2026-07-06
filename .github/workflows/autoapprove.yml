@@ -1,11 +1,21 @@
-name: Auto-approve and merge updatecli PRs
+name: Auto-approve and merge bot PRs
 
+## Approves and auto-merges (squash) PRs opened by the automation bots that
+## run against this repo: updatecli (ci-robbot, opening PRs from the
+## ci-forks/hadron-layers fork) and Renovate (renovate[bot], same-repo branch).
+## All actors are treated identically — approve, then flip the PR to auto-merge
+## so it lands once required checks pass.
+##
+## Uses pull_request_target so the workflow gets a write-scoped token even when
+## the PR head is a fork (the case for updatecli via ci-forks). Safe because we
+## gate on the PR author allow-list below and never check out PR code.
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - ready_for_review
       - synchronize
+      - reopened
 
 permissions:
   contents: write
@@ -13,12 +23,16 @@ permissions:
 
 jobs:
   autoapprove:
-    name: Auto-approve updatecli PR
+    name: Auto-approve bot PR
     runs-on: ubuntu-latest
-    # Only run for PRs from the known bot accounts used by updatecli/autobumper
+    ## Gate on the PR author (pull_request.user.login), NOT github.actor —
+    ## with pull_request_target the actor is who last touched the PR event,
+    ## which an attacker could game by adding a commit. The PR author is the
+    ## identity that opened the PR and cannot be spoofed by a later push.
     if: |
-      github.actor == 'github-actions[bot]' ||
-      github.actor == 'ci-robbot'
+      github.event.pull_request.user.login == 'github-actions[bot]' ||
+      github.event.pull_request.user.login == 'ci-robbot' ||
+      github.event.pull_request.user.login == 'renovate[bot]'
     steps:
       - name: Approve PR
         uses: hmarr/auto-approve-action@v4

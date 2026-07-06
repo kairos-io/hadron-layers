@@ -1,0 +1,64 @@
+name: Deploy layers page
+
+## Regenerate the static releases page after the layer build workflow finishes
+## a push (main or tag), or on demand. The page consumes releases.json which is
+## built fresh from the GHCR package versions API.
+on:
+  workflow_run:
+    workflows: ["Build and push layer images"]
+    types:
+      - completed
+  workflow_dispatch:
+
+## Serialize deploys but never cancel one in-flight — always let a running
+## deployment finish so GitHub Pages does not receive a half-uploaded artifact.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    ## Only rebuild the page after a successful build that came from a push
+    ## (either main or a tag). Skip PR-triggered upstream runs.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build releases.json and stage the site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p _site
+          cp site/index.html _site/index.html
+          ./site/build-data.sh _site/releases.json
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

@@ -6,6 +6,7 @@ sources:
     kind: gittag
     spec:
       url: https://github.com/git/git.git
+      lsremote: true
       versionfilter:
         kind: semver
         pattern: "*"

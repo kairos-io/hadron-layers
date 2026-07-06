@@ -17,6 +17,24 @@ variable "TAG" {
   default = "latest"
 }
 
+variable "REPO_URL" {
+  default = "https://github.com/kairos-io/hadron-layers"
+}
+
+# common_labels returns the OCI image labels shared by every layer. The
+# per-layer title and description are merged in at the target level.
+function "common_labels" {
+  params = [title, description]
+  result = {
+    "org.opencontainers.image.title"       = title
+    "org.opencontainers.image.description" = description
+    "org.opencontainers.image.source"      = REPO_URL
+    "org.opencontainers.image.url"         = REPO_URL
+    "org.opencontainers.image.vendor"      = "Kairos"
+    "org.opencontainers.image.base.name"   = "ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION}"
+  }
+}
+
 group "default" {
   targets = ["git", "gpg", "fwupd"]
 }
@@ -28,6 +46,7 @@ target "git" {
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
   }
+  labels    = common_labels("hadron-layer-git", "Git version control system")
   platforms = ["linux/amd64", "linux/arm64"]
   tags      = ["${REGISTRY}/hadron-layer-git:${TAG}"]
 }
@@ -39,6 +58,7 @@ target "gpg" {
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
   }
+  labels    = common_labels("hadron-layer-gpg", "GnuPG and its runtime libraries")
   platforms = ["linux/amd64", "linux/arm64"]
   tags      = ["${REGISTRY}/hadron-layer-gpg:${TAG}"]
 }
@@ -50,6 +70,7 @@ target "fwupd" {
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
   }
+  labels    = common_labels("hadron-layer-fwupd", "Firmware update daemon")
   platforms = ["linux/amd64", "linux/arm64"]
   tags      = ["${REGISTRY}/hadron-layer-fwupd:${TAG}"]
 }

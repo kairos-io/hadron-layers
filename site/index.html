@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hadron Layers</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2129;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #2f81f7;
+    --accent-2: #238636;
+    --code: #c9d1d9;
+    --highlight: rgba(47, 129, 247, .12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #11161d, var(--bg));
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.6rem; }
+  header p { margin: 0; color: var(--muted); }
+  header a { color: var(--accent); text-decoration: none; }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  input[type="search"] {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: .95rem;
+    min-width: 220px;
+    flex: 1;
+  }
+  .meta { color: var(--muted); font-size: .85rem; margin-bottom: 16px; }
+  .meta .pill {
+    display: inline-block;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 10px;
+    margin-right: 8px;
+  }
+  .meta .pill.toolchain { border-color: var(--accent); color: var(--accent); }
+  .meta a { color: var(--accent); text-decoration: none; }
+  .layers {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color .2s, box-shadow .2s;
+    scroll-margin-top: 20px;
+  }
+  .card.focused {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .card-header {
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .card-title { margin: 0; font-size: 1.15rem; }
+  .card-title a { color: var(--text); text-decoration: none; }
+  .card-title a:hover { color: var(--accent); }
+  .card-desc { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }
+  .card-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: .78rem;
+    color: var(--muted);
+  }
+  .badge.latest { color: var(--accent); border-color: var(--accent); }
+  .card-body { padding: 0 18px 16px; }
+  .pull-cmd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0b0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+  .pull-cmd code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    flex: 1;
+    min-width: 0;
+    font-size: .85rem;
+    color: var(--code);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    overflow-x: auto;
+  }
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .version-select {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: .82rem;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    min-width: 130px;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .82rem;
+    color: var(--code);
+    background: #0b0f14;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    word-break: break-all;
+  }
+  .none { color: var(--muted); font-style: italic; padding: 8px 0; }
+  button.btn, a.btn {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: .8rem;
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s, border-color .15s;
+  }
+  button.btn:hover, a.btn:hover { background: #2a3038; border-color: var(--accent); }
+  button.btn.copied { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+  button.btn:disabled { opacity: .4; cursor: not-allowed; }
+  button.btn:disabled:hover { background: var(--panel-2); border-color: var(--border); }
+  button.btn.docker { border-color: #1d63ed; }
+  button.btn.docker:hover { border-color: #2f81f7; }
+  button.btn .ico { width: 15px; height: 15px; flex: none; }
+  button.btn.toggle .ico { transition: transform .15s; }
+  button.btn.toggle[aria-expanded="true"] .ico { transform: rotate(90deg); }
+  .tags-panel {
+    padding: 14px 18px;
+    background: #0b0f14;
+    border-top: 1px solid var(--border);
+  }
+  .tags-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+  }
+  .tags-panel th {
+    text-align: left;
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tags-panel td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .tags-panel tr:last-child td { border-bottom: none; }
+  .tags-panel tr.highlighted { background: var(--highlight); }
+  .tags-panel .tag-cell { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-weight: 600; }
+  .tags-panel .digest {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--muted);
+    font-size: .72rem;
+  }
+  .empty { padding: 40px; text-align: center; color: var(--muted); }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 30px 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Hadron Layers</h1>
+  <p id="subtitle">Pre-built OCI layers for <a href="https://github.com/kairos-io/hadron">Hadron</a>. Each layer publishes a minimal image containing runtime binaries and shared libraries.</p>
+</header>
+<main>
+  <div class="controls">
+    <input type="search" id="filter" placeholder="Filter layers…" aria-label="Filter layers" />
+  </div>
+  <div class="meta" id="meta"></div>
+  <div id="layers-wrap" class="layers"></div>
+</main>
+<footer id="footer"></footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA = null;
+
+  function el(id) { return document.getElementById(id); }
+
+  // Parse the URL hash into {layer, tag}. Supported shapes:
+  //   #/git            → focus the git card
+  //   #/git/2.52.0     → focus git card and highlight the 2.52.0 row
+  function parseHash() {
+    var h = (location.hash || "").replace(/^#\/?/, "");
+    if (!h) return {};
+    var parts = h.split("/");
+    return { layer: parts[0] || null, tag: parts[1] || null };
+  }
+
+  function svgIcon(paths, viewBox) {
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("class", "ico");
+    svg.setAttribute("viewBox", viewBox || "0 0 16 16");
+    svg.setAttribute("fill", "currentColor");
+    svg.setAttribute("aria-hidden", "true");
+    var p = document.createElementNS(ns, "path");
+    p.setAttribute("d", paths);
+    svg.appendChild(p);
+    return svg;
+  }
+
+  function dockerIcon() {
+    return svgIcon(
+      "M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288z",
+      "0 0 24 24"
+    );
+  }
+
+  function chevronIcon() { return svgIcon("M6 3.5L10.5 8L6 12.5L5 11.5L8.5 8L5 4.5z"); }
+  function copyIcon() { return svgIcon("M4 2h6a1 1 0 0 1 1 1v1h-1V3H4v7H3V3a1 1 0 0 1 1-1zm2 2h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm0 1v8h6V5H6z"); }
+  function linkIcon() { return svgIcon("M6 2h8v8h-1V3.7L4.7 12 4 11.3 12.3 3H6z"); }
+
+  // Copy text to clipboard with a brief "Copied!" affordance on the button.
+  function copyButton(label, textFn, extraClass, iconFn) {
+    var btn = document.createElement("button");
+    btn.className = "btn" + (extraClass ? " " + extraClass : "");
+    btn.type = "button";
+    if (iconFn) btn.appendChild(iconFn());
+    var span = document.createElement("span");
+    span.textContent = label;
+    btn.appendChild(span);
+    btn.addEventListener("click", function () {
+      var text = typeof textFn === "function" ? textFn() : textFn;
+      if (!text) return;
+      var done = function () {
+        var prev = span.textContent;
+        span.textContent = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(function () {
+          span.textContent = prev;
+          btn.classList.remove("copied");
+        }, 1200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+    return btn;
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+  }
+
+  // Build the Dockerfile URL for a layer inside the source repo.
+  function dockerfileUrl(layer, repo) {
+    if (!repo) return null;
+    return "https://github.com/" + repo + "/tree/main/" + layer.name;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Render one layer card. `focusTag` (from the URL hash) is used to expand the
+  // tag panel and scroll the matching row into view.
+  function renderCard(layer, focusTag) {
+    var card = document.createElement("article");
+    card.className = "card";
+    card.id = "layer-" + layer.name;
+
+    var currentTag = focusTag || layer.latest || (layer.tags[0] && layer.tags[0].tag) || "";
+
+    var head = document.createElement("div");
+    head.className = "card-header";
+    var titleWrap = document.createElement("div");
+    var h = document.createElement("h2");
+    h.className = "card-title";
+    var titleLink = document.createElement("a");
+    titleLink.href = "#/" + layer.name;
+    titleLink.textContent = layer.title || layer.name;
+    h.appendChild(titleLink);
+    titleWrap.appendChild(h);
+    if (layer.description) {
+      var d = document.createElement("p");
+      d.className = "card-desc";
+      d.textContent = layer.description;
+      titleWrap.appendChild(d);
+    }
+    head.appendChild(titleWrap);
+
+    var badges = document.createElement("div");
+    badges.className = "card-badges";
+    if (layer.latest) {
+      var latestBadge = document.createElement("span");
+      latestBadge.className = "badge latest";
+      latestBadge.textContent = "latest: " + layer.latest;
+      badges.appendChild(latestBadge);
+    }
+    var tagCountBadge = document.createElement("span");
+    tagCountBadge.className = "badge";
+    tagCountBadge.textContent = layer.tags.length + " tag" + (layer.tags.length === 1 ? "" : "s");
+    badges.appendChild(tagCountBadge);
+    head.appendChild(badges);
+    card.appendChild(head);
+
+    var body = document.createElement("div");
+    body.className = "card-body";
+
+    // Pull command with an inline version selector so users can pick any tag.
+    var pullBar = document.createElement("div");
+    pullBar.className = "pull-cmd";
+    var pullCode = document.createElement("code");
+
+    var versionSelect = document.createElement("select");
+    versionSelect.className = "version-select";
+    versionSelect.setAttribute("aria-label", "Select version");
+    layer.tags.forEach(function (t) {
+      var opt = document.createElement("option");
+      opt.value = t.tag;
+      opt.textContent = t.tag + (t.tag === layer.latest ? "  (latest)" : "");
+      versionSelect.appendChild(opt);
+    });
+    if (!layer.tags.length) {
+      var opt = document.createElement("option");
+      opt.textContent = "(no tags published)";
+      opt.disabled = true;
+      versionSelect.appendChild(opt);
+      versionSelect.disabled = true;
+    } else {
+      versionSelect.value = currentTag;
+    }
+
+    function currentImageRef() {
+      return layer.image + ":" + versionSelect.value;
+    }
+    function currentDigestRef() {
+      var found = layer.tags.filter(function (t) { return t.tag === versionSelect.value; })[0];
+      return found && found.digest ? layer.image + "@" + found.digest : "";
+    }
+    function refreshPull() {
+      pullCode.textContent = layer.tags.length
+        ? "docker pull " + currentImageRef()
+        : layer.image + " (no published tags)";
+    }
+    versionSelect.addEventListener("change", function () { refreshPull(); });
+    refreshPull();
+
+    pullBar.appendChild(versionSelect);
+    pullBar.appendChild(pullCode);
+    var pullCopyBtn = copyButton("Copy", function () { return "docker pull " + currentImageRef(); }, null, copyIcon);
+    if (!layer.tags.length) pullCopyBtn.disabled = true;
+    pullBar.appendChild(pullCopyBtn);
+    body.appendChild(pullBar);
+
+    var actions = document.createElement("div");
+    actions.className = "card-actions";
+
+    var imageRefBtn = copyButton("Copy image ref", function () { return currentImageRef(); }, "docker", dockerIcon);
+    if (!layer.tags.length) imageRefBtn.disabled = true;
+    actions.appendChild(imageRefBtn);
+
+    var digestBtn = copyButton("Copy pinned digest", function () { return currentDigestRef(); }, null, copyIcon);
+    actions.appendChild(digestBtn);
+    var refreshDigestBtn = function () {
+      digestBtn.disabled = !currentDigestRef();
+    };
+    versionSelect.addEventListener("change", refreshDigestBtn);
+    refreshDigestBtn();
+
+    var df = dockerfileUrl(layer, DATA.repo);
+    if (df) {
+      var dfLink = document.createElement("a");
+      dfLink.className = "btn";
+      dfLink.href = df;
+      dfLink.target = "_blank";
+      dfLink.rel = "noopener";
+      dfLink.appendChild(linkIcon());
+      var dfSpan = document.createElement("span");
+      dfSpan.textContent = "Dockerfile";
+      dfLink.appendChild(dfSpan);
+      actions.appendChild(dfLink);
+    }
+
+    var toggle = document.createElement("button");
+    toggle.className = "btn toggle";
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.appendChild(chevronIcon());
+    var toggleLabel = document.createElement("span");
+    toggleLabel.textContent = "See all tags";
+    toggle.appendChild(toggleLabel);
+    if (!layer.tags.length) toggle.disabled = true;
+    actions.appendChild(toggle);
+
+    body.appendChild(actions);
+    card.appendChild(body);
+
+    // Collapsible tag history panel.
+    var panel = document.createElement("div");
+    panel.className = "tags-panel";
+    panel.style.display = "none";
+    if (layer.tags.length) {
+      var table = document.createElement("table");
+      table.innerHTML = "<thead><tr><th>Tag</th><th>Created</th><th>Digest</th><th style=\"text-align:right\">Actions</th></tr></thead>";
+      var tbody = document.createElement("tbody");
+      layer.tags.forEach(function (t) {
+        var tr = document.createElement("tr");
+        if (focusTag && t.tag === focusTag) tr.className = "highlighted";
+        var tdTag = document.createElement("td");
+        tdTag.className = "tag-cell";
+        tdTag.textContent = t.tag;
+        tr.appendChild(tdTag);
+        var tdCreated = document.createElement("td");
+        tdCreated.textContent = formatDate(t.created);
+        tr.appendChild(tdCreated);
+        var tdDigest = document.createElement("td");
+        tdDigest.className = "digest";
+        tdDigest.textContent = t.digest ? t.digest.slice(0, 19) + "…" : "";
+        tdDigest.title = t.digest || "";
+        tr.appendChild(tdDigest);
+        var tdActions = document.createElement("td");
+        tdActions.style.textAlign = "right";
+        var wrap = document.createElement("div");
+        wrap.style.display = "inline-flex";
+        wrap.style.gap = "6px";
+        wrap.appendChild(copyButton("Copy tag", layer.image + ":" + t.tag, null, copyIcon));
+        if (t.digest) {
+          wrap.appendChild(copyButton("Copy pinned", layer.image + "@" + t.digest, null, copyIcon));
+        }
+        tdActions.appendChild(wrap);
+        tr.appendChild(tdActions);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      panel.appendChild(table);
+    } else {
+      var none = document.createElement("div");
+      none.className = "none";
+      none.textContent = "No published tags found for this image.";
+      panel.appendChild(none);
+    }
+    card.appendChild(panel);
+
+    toggle.addEventListener("click", function () {
+      var open = panel.style.display === "none";
+      panel.style.display = open ? "" : "none";
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      toggleLabel.textContent = open ? "Hide tags" : "See all tags";
+    });
+
+    // Deep-link expansion: if a tag was specified in the URL, open the panel
+    // pre-expanded and scroll the highlighted row into view.
+    if (focusTag) {
+      panel.style.display = "";
+      toggle.setAttribute("aria-expanded", "true");
+      toggleLabel.textContent = "Hide tags";
+    }
+
+    return { card: card, panel: panel, toggle: toggle, toggleLabel: toggleLabel };
+  }
+
+  function render() {
+    var filter = el("filter").value.trim().toLowerCase();
+    var hash = parseHash();
+    var layers = (DATA.layers || []).filter(function (l) {
+      if (!filter) return true;
+      var hay = (l.name + " " + (l.title || "") + " " + (l.description || "")).toLowerCase();
+      return hay.indexOf(filter) !== -1;
+    });
+
+    var totalTags = (DATA.layers || []).reduce(function (n, l) { return n + l.tags.length; }, 0);
+    var meta = el("meta");
+    meta.innerHTML = "";
+    var pills = [];
+    if (DATA.toolchain) pills.push({ text: "toolchain " + DATA.toolchain, cls: "pill toolchain" });
+    pills.push({ text: layers.length + " layer" + (layers.length === 1 ? "" : "s"), cls: "pill" });
+    pills.push({ text: totalTags + " total tag" + (totalTags === 1 ? "" : "s"), cls: "pill" });
+    pills.forEach(function (p) {
+      var span = document.createElement("span");
+      span.className = p.cls;
+      span.textContent = p.text;
+      meta.appendChild(span);
+    });
+    if (DATA.repo) {
+      var link = document.createElement("a");
+      link.href = "https://github.com/" + DATA.repo;
+      link.textContent = "View source on GitHub ↗";
+      link.target = "_blank";
+      link.rel = "noopener";
+      meta.appendChild(link);
+    }
+
+    var wrap = el("layers-wrap");
+    wrap.innerHTML = "";
+    if (!layers.length) {
+      var empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "No layers match your filter.";
+      wrap.appendChild(empty);
+      return;
+    }
+
+    var focusTag = hash.layer ? hash.tag : null;
+    var focusedCard = null;
+    layers.forEach(function (l) {
+      var isFocused = hash.layer && l.name === hash.layer;
+      var built = renderCard(l, isFocused ? focusTag : null);
+      if (isFocused) {
+        built.card.classList.add("focused");
+        focusedCard = built.card;
+      }
+      wrap.appendChild(built.card);
+    });
+
+    if (focusedCard) {
+      // Defer to next frame so layout is settled before scrolling.
+      requestAnimationFrame(function () {
+        focusedCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
+
+  function init(data) {
+    DATA = data;
+    if (!data.layers || !data.layers.length) {
+      el("layers-wrap").innerHTML = '<div class="empty">No layers found in releases.json.</div>';
+      return;
+    }
+    el("filter").addEventListener("input", render);
+    window.addEventListener("hashchange", render);
+    var footer = el("footer");
+    if (data.generated) footer.textContent = "Data generated " + data.generated;
+    render();
+  }
+
+  fetch("releases.json", { cache: "no-store" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(init)
+    .catch(function (err) {
+      el("layers-wrap").innerHTML =
+        '<div class="empty">Could not load releases.json: ' + String(err) + "</div>";
+    });
+})();
+</script>
+</body>
+</html>
