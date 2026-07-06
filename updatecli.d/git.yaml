@@ -1,19 +1,6 @@
 ---
 name: Git layer version updates
 
-scms:
-  github:
-    kind: github
-    spec:
-      user: "ci-robbot"
-      email: "robot@c3os.io"
-      owner: kairos-io
-      repository: hadron-layers
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      branch: main
-      commitmessage:
-        title: 'chore(git): bump git to {{ source "git" }}'
-
 sources:
   git:
     kind: gittag
@@ -29,21 +16,9 @@ targets:
   git_version:
     name: 'GIT_VERSION in git/Dockerfile updated to {{ source "git" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: git/Dockerfile
       instruction:
         keyword: ARG
         matcher: GIT_VERSION
     sourceid: git
-
-pullrequests:
-  git:
-    kind: github
-    scmid: github
-    title: 'chore(git): automatic version bump to {{ source "git" }}'
-    spec:
-      automerge: false
-      labels:
-        - "automated"
-        - "git"
