@@ -1,19 +1,6 @@
 ---
 name: fwupd layer version updates
 
-scms:
-  github:
-    kind: github
-    spec:
-      user: "ci-robbot"
-      email: "robot@c3os.io"
-      owner: kairos-io
-      repository: hadron-layers
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      branch: main
-      commitmessage:
-        title: "chore(fwupd): bump fwupd layer dependencies"
-
 sources:
   fwupd:
     kind: githubrelease
@@ -95,7 +82,6 @@ targets:
   fwupd_version:
     name: 'FWUPD_VERSION in fwupd/Dockerfile updated to {{ source "fwupd" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -106,7 +92,6 @@ targets:
   glib_version:
     name: 'GLIB_VERSION in fwupd/Dockerfile updated to {{ source "glib" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -117,7 +102,6 @@ targets:
   pcre2_version:
     name: 'PCRE2_VERSION in fwupd/Dockerfile updated to {{ source "pcre2" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -128,7 +112,6 @@ targets:
   libxmlb_version:
     name: 'LIBXMLB_VERSION in fwupd/Dockerfile updated to {{ source "libxmlb" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -139,7 +122,6 @@ targets:
   libusb_version:
     name: 'LIBUSB_VERSION in fwupd/Dockerfile updated to {{ source "libusb" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -150,7 +132,6 @@ targets:
   libjcat_version:
     name: 'LIBJCAT_VERSION in fwupd/Dockerfile updated to {{ source "libjcat" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -161,7 +142,6 @@ targets:
   json_glib_version:
     name: 'JSON_GLIB_VERSION in fwupd/Dockerfile updated to {{ source "json_glib" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -172,7 +152,6 @@ targets:
   sqlite3_version:
     name: 'SQLITE3_VERSION in fwupd/Dockerfile updated to {{ source "sqlite3" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
@@ -183,21 +162,9 @@ targets:
   libffi_version:
     name: 'LIBFFI_VERSION in fwupd/Dockerfile updated to {{ source "libffi" }}'
     kind: dockerfile
-    scmid: github
     spec:
       file: fwupd/Dockerfile
       instruction:
         keyword: ARG
         matcher: LIBFFI_VERSION
     sourceid: libffi
-
-pullrequests:
-  fwupd:
-    kind: github
-    scmid: github
-    title: "chore(fwupd): automatic dependency version bumps"
-    spec:
-      automerge: false
-      labels:
-        - "automated"
-        - "fwupd"

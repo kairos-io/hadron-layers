@@ -1,19 +1,6 @@
 ---
 name: Hadron toolchain version updates
 
-scms:
-  github:
-    kind: github
-    spec:
-      user: "ci-robbot"
-      email: "robot@c3os.io"
-      owner: kairos-io
-      repository: hadron-layers
-      token: '{{ requiredEnv "UPDATECLI_GITHUB_TOKEN" }}'
-      branch: main
-      commitmessage:
-        title: 'chore: bump hadron toolchain to {{ source "hadron" }}'
-
 sources:
   hadron:
     kind: githubrelease
@@ -25,19 +12,7 @@ targets:
   hadron_toolchain_bake:
     name: 'HADRON_TOOLCHAIN_VERSION in docker-bake.hcl updated to {{ source "hadron" }}'
     kind: hcl
-    scmid: github
     spec:
       file: docker-bake.hcl
       path: variable.HADRON_TOOLCHAIN_VERSION.default
     sourceid: hadron
-
-pullrequests:
-  toolchain:
-    kind: github
-    scmid: github
-    title: 'chore: automatic toolchain version bump to {{ source "hadron" }}'
-    spec:
-      automerge: false
-      labels:
-        - "automated"
-        - "toolchain"
