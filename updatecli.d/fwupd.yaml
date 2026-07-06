@@ -93,7 +93,7 @@ sources:
 
 targets:
   fwupd_version:
-    name: "FWUPD_VERSION in fwupd/Dockerfile updated to {{ source "fwupd" }}"
+    name: 'FWUPD_VERSION in fwupd/Dockerfile updated to {{ source "fwupd" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -104,7 +104,7 @@ targets:
     sourceid: fwupd
 
   glib_version:
-    name: "GLIB_VERSION in fwupd/Dockerfile updated to {{ source "glib" }}"
+    name: 'GLIB_VERSION in fwupd/Dockerfile updated to {{ source "glib" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -115,7 +115,7 @@ targets:
     sourceid: glib
 
   pcre2_version:
-    name: "PCRE2_VERSION in fwupd/Dockerfile updated to {{ source "pcre2" }}"
+    name: 'PCRE2_VERSION in fwupd/Dockerfile updated to {{ source "pcre2" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -126,7 +126,7 @@ targets:
     sourceid: pcre2
 
   libxmlb_version:
-    name: "LIBXMLB_VERSION in fwupd/Dockerfile updated to {{ source "libxmlb" }}"
+    name: 'LIBXMLB_VERSION in fwupd/Dockerfile updated to {{ source "libxmlb" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -137,7 +137,7 @@ targets:
     sourceid: libxmlb
 
   libusb_version:
-    name: "LIBUSB_VERSION in fwupd/Dockerfile updated to {{ source "libusb" }}"
+    name: 'LIBUSB_VERSION in fwupd/Dockerfile updated to {{ source "libusb" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -148,7 +148,7 @@ targets:
     sourceid: libusb
 
   libjcat_version:
-    name: "LIBJCAT_VERSION in fwupd/Dockerfile updated to {{ source "libjcat" }}"
+    name: 'LIBJCAT_VERSION in fwupd/Dockerfile updated to {{ source "libjcat" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -159,7 +159,7 @@ targets:
     sourceid: libjcat
 
   json_glib_version:
-    name: "JSON_GLIB_VERSION in fwupd/Dockerfile updated to {{ source "json_glib" }}"
+    name: 'JSON_GLIB_VERSION in fwupd/Dockerfile updated to {{ source "json_glib" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -170,7 +170,7 @@ targets:
     sourceid: json_glib
 
   sqlite3_version:
-    name: "SQLITE3_VERSION in fwupd/Dockerfile updated to {{ source "sqlite3" }}"
+    name: 'SQLITE3_VERSION in fwupd/Dockerfile updated to {{ source "sqlite3" }}'
     kind: dockerfile
     scmid: github
     spec:
@@ -181,7 +181,7 @@ targets:
     sourceid: sqlite3
 
   libffi_version:
-    name: "LIBFFI_VERSION in fwupd/Dockerfile updated to {{ source "libffi" }}"
+    name: 'LIBFFI_VERSION in fwupd/Dockerfile updated to {{ source "libffi" }}'
     kind: dockerfile
     scmid: github
     spec:
