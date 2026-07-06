@@ -11,10 +11,6 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
-
 # Serialize runs per ref so only one main build runs at a time.
 # Pushes to main queue and run in order (cancel-in-progress: false) to avoid
 # cache races and older images overwriting newer ones. Pull request runs cancel
@@ -23,89 +19,44 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  # Auto-discover layer directories and determine which ones need rebuilding.
-  # A layer is rebuilt when its own directory, docker-bake.hcl, or this
-  # workflow file changed.  Tag pushes and workflow_dispatch rebuild everything.
-  # The output is a JSON array consumed by the build job's matrix.
-  # Convention: every top-level directory that contains a Dockerfile is a layer,
-  # and the bake target name must match the directory name.
-  prepare:
-    name: Discover and filter layers
+  # Auto-discover layer directories. Every layer is built on every run — the
+  # per-layer GHA cache (scope=<layer>, mode=max) short-circuits work when a
+  # layer's inputs are unchanged, so change-detection at the workflow level
+  # would only duplicate what BuildKit already does.
+  discover:
+    name: Discover layers
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
-      - name: Discover layers and detect changes
+      - name: Enumerate layer directories
         id: discover
         run: |
-          # Find Dockerfiles exactly one directory level deep, excluding hidden directories.
-          ALL_LAYERS=$(find . -mindepth 2 -maxdepth 2 -name "Dockerfile" -not -path '*/.*/*' \
+          # Convention: every top-level directory with a Dockerfile is a layer,
+          # and the bake target name matches the directory name.
+          MATRIX=$(find . -mindepth 2 -maxdepth 2 -name "Dockerfile" -not -path '*/.*/*' \
             | sed 's|^\./||; s|/Dockerfile$||' \
-            | sort | tr '\n' ' ')
-          echo "All layers: $ALL_LAYERS"
-
-          # Tag push or manual dispatch → rebuild every layer.
-          if [[ "${{ github.ref_type }}" == "tag" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "Forced rebuild: building all layers"
-            LAYERS_TO_BUILD="$ALL_LAYERS"
-          else
-            # Determine the set of changed files via git diff.
-            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              # Use the exact base commit SHA from the PR event for a reliable diff.
-              CHANGED=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD)
-            elif git rev-parse HEAD~1 >/dev/null 2>&1; then
-              CHANGED=$(git diff --name-only HEAD~1 HEAD)
-            else
-              # First commit on the branch – treat everything as new.
-              CHANGED=$(git ls-files)
-            fi
-            echo "Changed files:"
-            echo "$CHANGED"
-
-            # GITHUB_WORKFLOW_REF format: owner/repo/.github/workflows/file.yml@ref
-            # Extract starting from '.github/' — assumes it appears only once in the ref.
-            WORKFLOW_PATH=$(echo "$GITHUB_WORKFLOW_REF" | sed 's|^.*\.github/|.github/|; s|@.*$||')
-
-            # If common files changed, rebuild all layers.
-            # Use fixed-string matching for the workflow path to handle any special characters.
-            if echo "$CHANGED" | grep -qE '^docker-bake\.hcl$' || \
-               echo "$CHANGED" | grep -qF "$WORKFLOW_PATH"; then
-              echo "Common files changed: building all layers"
-              LAYERS_TO_BUILD="$ALL_LAYERS"
-            else
-              # Rebuild only the layers whose directory was touched.
-              LAYERS_TO_BUILD=""
-              for layer in $ALL_LAYERS; do
-                if echo "$CHANGED" | grep -qE "^${layer}(/|$)"; then
-                  LAYERS_TO_BUILD="$LAYERS_TO_BUILD $layer"
-                fi
-              done
-            fi
-          fi
-
-          # Emit a JSON array (empty array is valid; the build job will skip).
-          MATRIX=$(echo "$LAYERS_TO_BUILD" \
-            | tr ' ' '\n' | grep -v '^$' \
-            | jq -c -R -s 'split("\n") | map(select(length > 0))')
-          echo "Layers to build: $MATRIX"
+            | sort \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Layers: $MATRIX"
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build ${{ matrix.layer }} layer
     runs-on: oracle-vm-32cpu-128gb-x86-64
-    needs: prepare
-    # Skip entirely when nothing needs to be rebuilt.
-    if: needs.prepare.outputs.matrix != '[]'
+    needs: discover
     strategy:
       fail-fast: false
       matrix:
-        layer: ${{ fromJson(needs.prepare.outputs.matrix) }}
+        layer: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
