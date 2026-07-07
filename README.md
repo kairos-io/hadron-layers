@@ -28,6 +28,7 @@ Each layer lives in its own subdirectory (e.g. `git/Dockerfile`) and follows thi
 1. **Build stage** – compiles from source using `ghcr.io/kairos-io/hadron-toolchain`.
 2. **Merge stage** – collects all build outputs, then strips dev artifacts (headers `*.h`, static libs `*.a`, libtool archives `*.la`, pkg-config files `*.pc`, man pages, docs). Only runtime files remain.
 3. **Final `default` stage** – `FROM scratch`, copying the filtered output. This is the published image.
+4. **`test` stage** – `FROM ghcr.io/kairos-io/hadron:latest`, layered with `default`, runs offline smoke tests (`RUN`) that exercise the built binaries. CI builds this stage first (amd64 only); if any `RUN` fails, the release build is skipped.
 
 ## Toolchain version
 
@@ -42,7 +43,7 @@ Each layer lives in its own subdirectory (e.g. `git/Dockerfile`) and follows thi
 
 ## Adding a new layer
 
-1. Create a new directory (e.g. `myapp/`) with a `Dockerfile` that follows the build → merge → `FROM scratch AS default` pattern.
+1. Create a new directory (e.g. `myapp/`) with a `Dockerfile` that follows the build → merge → `FROM scratch AS default` → `FROM ghcr.io/kairos-io/hadron:latest AS test` pattern. The `test` stage must `COPY --from=default / /` and add offline `RUN` steps that exercise the shipped binaries.
 2. Add a target to `docker-bake.hcl` passing `HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION` and OCI labels via `common_labels("hadron-layer-myapp", "One-line description")` (the description surfaces on the releases page).
 3. Add an updatecli config under `updatecli.d/myapp.yaml` to track upstream releases.
 4. Add `myapp` to the `matrix.config` list in `.github/workflows/autobumper.yml`.

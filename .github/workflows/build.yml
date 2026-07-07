@@ -91,6 +91,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Build the Dockerfile's `test` stage and let any RUN in it execute.
+      # A non-zero exit fails this job and prevents the release build below
+      # from running. Kept amd64-only: arm64 test would need QEMU emulation
+      # which is slow and rarely surfaces bugs the amd64 test does not.
+      # Cache is shared with the release build so this step warms the amd64
+      # portion of the layer stack for free.
+      - name: Smoke test ${{ matrix.layer }} layer
+        uses: docker/bake-action@v7
+        with:
+          targets: ${{ matrix.layer }}
+          push: false
+          set: |
+            *.target=test
+            *.output=type=cacheonly
+            *.platform=linux/amd64
+            *.cache-from=type=gha,scope=${{ matrix.layer }}
+            *.cache-to=type=gha,scope=${{ matrix.layer }},mode=max
+
       - name: Build and push ${{ matrix.layer }} layer
         uses: docker/bake-action@v7
         with:

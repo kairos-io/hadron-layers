@@ -39,3 +39,26 @@ RUN find /output -name "*.h"  -delete && \
 # Or create a sysextension with the help of Auroraboot (https://github.com/kairos-io/auroraboot)
 FROM scratch AS default
 COPY --from=merge /output/ /
+
+# Smoke-test the built layer against a Hadron base image. Any RUN failure
+# here fails the build and gates the release step in CI. Kept fully offline
+# so the test is deterministic and does not depend on external network.
+FROM ghcr.io/kairos-io/hadron:latest AS test
+COPY --from=default / /
+RUN git --version
+RUN set -eux; \
+    export HOME=/tmp; \
+    git config --global user.email test@hadron.local; \
+    git config --global user.name test; \
+    mkdir -p /tmp/repo && cd /tmp/repo; \
+    git init -q -b main; \
+    echo hello > file.txt; \
+    git add file.txt; \
+    git commit -q -m initial; \
+    git log --oneline | grep -q initial; \
+    git checkout -q -b feature; \
+    echo world >> file.txt; \
+    git commit -q -am update; \
+    git checkout -q main; \
+    git merge -q --no-ff feature -m merge; \
+    [ "$(git log --oneline | wc -l)" = 3 ]

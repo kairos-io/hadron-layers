@@ -193,3 +193,18 @@ COPY --from=merge /output/usr/share/dbus-1/ /usr/share/dbus-1/
 COPY --from=merge /output/usr/share/fwupd/ /usr/share/fwupd/
 COPY --from=merge /output/usr/share/icons/ /usr/share/icons/
 COPY --from=merge /output/usr/share/metainfo/ /usr/share/metainfo/
+
+# Smoke-test the built layer against a Hadron base image. Any RUN failure
+# here fails the build and gates the release step in CI. fwupd depends on
+# a long transitive stack (glib, libxmlb, libjcat, sqlite, libusb, libffi,
+# gettext) — a version check catches broken linkage, missing symbols and
+# runtime loader misconfiguration in the assembled layer.
+FROM ghcr.io/kairos-io/hadron:latest AS test
+COPY --from=default / /
+# fwupdtool is the standalone tool — links the same libfwupd /
+# libfwupdplugin stack as the daemon but does not need a running fwupd
+# on DBus, so it exercises the full transitive dep chain (glib, libxmlb,
+# libjcat, sqlite, libusb, libffi, gettext) at runtime. get-plugins
+# additionally forces the plugin loader to initialize.
+RUN fwupdtool --version
+RUN fwupdtool get-plugins --json > /dev/null
