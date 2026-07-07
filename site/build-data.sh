@@ -17,9 +17,9 @@
 ##     "layers": [
 ##       {
 ##         "name": "git",
-##         "title": "hadron-layer-git",
+##         "title": "git",
 ##         "description": "Git version control system",
-##         "image": "ghcr.io/kairos-io/hadron-layer-git",
+##         "image": "ghcr.io/kairos-io/git",
 ##         "source": "https://github.com/kairos-io/hadron-layers",
 ##         "latest": "2.52.0",
 ##         "tags": [
@@ -65,7 +65,7 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
   image="${first_tag%:*}"
 
   ## The GHCR package name is expected to match the OCI title label (e.g.
-  ## `hadron-layer-git`). Fall back to the image basename if the label is missing.
+  ## `git`). Fall back to the image basename if the label is missing.
   pkg="${title}"
   if [[ -z "$pkg" || "$pkg" == "$target" ]]; then
     pkg=$(basename "$image")

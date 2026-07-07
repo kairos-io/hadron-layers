@@ -117,7 +117,7 @@ jobs:
           push: false
           set: |
             *.platform=linux/${{ matrix.arch }}
-            *.output=${{ github.event_name != 'pull_request' && format('type=image,name=ghcr.io/kairos-io/hadron-layer-{0},push-by-digest=true,name-canonical=true,push=true', matrix.layer) || 'type=cacheonly' }}
+            *.output=${{ github.event_name != 'pull_request' && format('type=image,name=ghcr.io/kairos-io/{0},push-by-digest=true,name-canonical=true,push=true', matrix.layer) || 'type=cacheonly' }}
             *.tags=
             *.cache-from=type=gha,scope=${{ matrix.layer }}-${{ matrix.arch }}
             *.cache-to=type=gha,scope=${{ matrix.layer }}-${{ matrix.arch }},mode=max
@@ -206,12 +206,12 @@ jobs:
           REGISTRY: ghcr.io/kairos-io
         run: |
           docker buildx imagetools create \
-            -t "$REGISTRY/hadron-layer-$LAYER:$VERSION" \
-            $(printf "$REGISTRY/hadron-layer-$LAYER@sha256:%s " *)
+            -t "$REGISTRY/$LAYER:$VERSION" \
+            $(printf "$REGISTRY/$LAYER@sha256:%s " *)
 
       - name: Inspect image
         env:
           LAYER: ${{ matrix.layer }}
           VERSION: ${{ steps.version.outputs.value }}
           REGISTRY: ghcr.io/kairos-io
-        run: docker buildx imagetools inspect "$REGISTRY/hadron-layer-$LAYER:$VERSION"
+        run: docker buildx imagetools inspect "$REGISTRY/$LAYER:$VERSION"

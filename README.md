@@ -2,13 +2,13 @@
 
 A collection of pre-built layers for [Hadron](https://github.com/kairos-io/hadron). Each layer compiles a software component from source using the Hadron toolchain and publishes a minimal OCI image containing only the runtime binaries and their shared-library dependencies.
 
-Images are published to `ghcr.io/kairos-io/hadron-layer-<name>` and are indexed with copy-ready pull commands, tag history and pinned digests at [kairos-io.github.io/hadron-layers](https://kairos-io.github.io/hadron-layers/) (raw data at [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json), individual layer pages at `#/<layer>` and `#/<layer>/<tag>`).
+Images are published to `ghcr.io/kairos-io/<name>` and are indexed with copy-ready pull commands, tag history and pinned digests at [kairos-io.github.io/hadron-layers](https://kairos-io.github.io/hadron-layers/) (raw data at [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json), individual layer pages at `#/<layer>` and `#/<layer>/<tag>`).
 
 They can be used to extend a Hadron base system:
 
 ```dockerfile
 FROM ghcr.io/kairos-io/hadron:VERSION
-COPY --from=ghcr.io/kairos-io/hadron-layer-git:latest / /
+COPY --from=ghcr.io/kairos-io/git:latest / /
 ```
 
 Or to create a sysextension with [Auroraboot](https://github.com/kairos-io/auroraboot).
@@ -17,9 +17,9 @@ Or to create a sysextension with [Auroraboot](https://github.com/kairos-io/auror
 
 | Layer | Image | Description |
 |-------|-------|-------------|
-| `git` | `ghcr.io/kairos-io/hadron-layer-git` | Git version control system |
-| `gpg` | `ghcr.io/kairos-io/hadron-layer-gpg` | GnuPG and its runtime libraries |
-| `fwupd` | `ghcr.io/kairos-io/hadron-layer-fwupd` | Firmware update daemon |
+| `git` | `ghcr.io/kairos-io/git` | Git version control system |
+| `gpg` | `ghcr.io/kairos-io/gpg` | GnuPG and its runtime libraries |
+| `fwupd` | `ghcr.io/kairos-io/fwupd` | Firmware update daemon |
 
 ## How it works
 
@@ -44,7 +44,7 @@ Each layer lives in its own subdirectory (e.g. `git/Dockerfile`) and follows thi
 ## Adding a new layer
 
 1. Create a new directory (e.g. `myapp/`) with a `Dockerfile` that follows the build → merge → `FROM scratch AS default` → `ARG HADRON_VERSION` + `FROM ghcr.io/kairos-io/hadron:${HADRON_VERSION} AS test` pattern. The `test` stage must `COPY --from=default / /` and add offline `RUN` steps that exercise the shipped binaries.
-2. Add a target to `docker-bake.hcl` passing `HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION` and `HADRON_VERSION = HADRON_VERSION`, plus OCI labels via `common_labels("hadron-layer-myapp", "One-line description")` (the description surfaces on the releases page).
+2. Add a target to `docker-bake.hcl` passing `HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION` and `HADRON_VERSION = HADRON_VERSION`, plus OCI labels via `common_labels("myapp", "One-line description")` (the description surfaces on the releases page).
 3. Add an updatecli config under `updatecli.d/myapp.yaml` to track upstream releases.
 4. Add `myapp` to the `matrix.config` list in `.github/workflows/autobumper.yml`.
 

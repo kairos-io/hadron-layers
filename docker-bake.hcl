@@ -54,9 +54,9 @@ target "git" {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("hadron-layer-git", "Git version control system")
+  labels    = common_labels("git", "Git version control system")
   platforms = ["linux/amd64", "linux/arm64"]
-  tags      = ["${REGISTRY}/hadron-layer-git:${TAG}"]
+  tags      = ["${REGISTRY}/git:${TAG}"]
 }
 
 target "gpg" {
@@ -67,9 +67,9 @@ target "gpg" {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("hadron-layer-gpg", "GnuPG and its runtime libraries")
+  labels    = common_labels("gpg", "GnuPG and its runtime libraries")
   platforms = ["linux/amd64", "linux/arm64"]
-  tags      = ["${REGISTRY}/hadron-layer-gpg:${TAG}"]
+  tags      = ["${REGISTRY}/gpg:${TAG}"]
 }
 
 target "fwupd" {
@@ -80,7 +80,7 @@ target "fwupd" {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("hadron-layer-fwupd", "Firmware update daemon")
+  labels    = common_labels("fwupd", "Firmware update daemon")
   platforms = ["linux/amd64", "linux/arm64"]
-  tags      = ["${REGISTRY}/hadron-layer-fwupd:${TAG}"]
+  tags      = ["${REGISTRY}/fwupd:${TAG}"]
 }

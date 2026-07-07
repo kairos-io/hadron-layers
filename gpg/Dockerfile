@@ -137,7 +137,7 @@ RUN find /output -name "*.h"  -delete && \
 # Final layer: only the built gpg binaries and their runtime dependencies.
 # Use as a layer on top of Hadron:
 #   FROM ghcr.io/kairos-io/hadron:VERSION
-#   COPY --from=ghcr.io/kairos-io/hadron-layer-gpg:TAG / /
+#   COPY --from=ghcr.io/kairos-io/gpg:TAG / /
 # Or create a sysextension with the help of Auroraboot (https://github.com/kairos-io/auroraboot)
 FROM scratch AS default
 COPY --from=merge /output/ /
