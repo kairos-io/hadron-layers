@@ -96,13 +96,15 @@ jobs:
       # from running. Kept amd64-only: arm64 test would need QEMU emulation
       # which is slow and rarely surfaces bugs the amd64 test does not.
       #
-      # This step writes to its own cache scope (<layer>-test) instead of the
-      # release scope. GHA cache keys are immutable, so if both steps wrote to
-      # the same scope the smoke test (amd64-only) would create the manifest
-      # first and the release step's write (which also carries arm64) would be
-      # rejected as a conflict — leaving arm64 uncached and recompiled under
-      # QEMU on every run. The release step below reads this scope so the amd64
-      # work done here is still reused for free.
+      # This step only READS the layer's cache (no cache-to). It shares the
+      # buildx instance with the build-and-push step below, so the amd64 stages
+      # it compiles stay in the local BuildKit cache and are reused there for
+      # free — no duplicate work and no second cache scope. Crucially, letting
+      # the release step be the *only* cache-to writer avoids the GHA
+      # immutable-key conflict that previously dropped the arm64 layers (two
+      # writers to one scope: the amd64-only smoke test claimed the key first,
+      # so the release step's arm64 write was rejected and recompiled under
+      # QEMU on every run).
       - name: Smoke test ${{ matrix.layer }} layer
         uses: docker/bake-action@v7
         with:
@@ -112,13 +114,12 @@ jobs:
             *.target=test
             *.output=type=cacheonly
             *.platform=linux/amd64
-            *.cache-from=type=gha,scope=${{ matrix.layer }}-test
-            *.cache-to=type=gha,scope=${{ matrix.layer }}-test,mode=max
+            *.cache-from=type=gha,scope=${{ matrix.layer }}
 
-      # Sole writer of the release scope (<layer>), so its cache-to never hits
-      # an immutable-key conflict and both amd64 and arm64 layers persist
-      # between runs. Reads the smoke test scope too, to reuse the amd64 layers
-      # warmed above without recompiling them.
+      # Sole writer of the layer cache scope, so cache-to never hits an
+      # immutable-key conflict and both amd64 and arm64 layers persist between
+      # runs. The amd64 stages compiled by the smoke test above are reused from
+      # the shared local BuildKit cache, so only the arm64 stages are built here.
       - name: Build and push ${{ matrix.layer }} layer
         uses: docker/bake-action@v7
         with:
@@ -126,7 +127,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           set: |
             *.cache-from=type=gha,scope=${{ matrix.layer }}
-            *.cache-from=type=gha,scope=${{ matrix.layer }}-test
             *.cache-to=type=gha,scope=${{ matrix.layer }},mode=max
         env:
           TAG: ${{ steps.version.outputs.value }}
