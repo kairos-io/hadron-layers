@@ -6,7 +6,7 @@
 # build.
 
 variable "HADRON_TOOLCHAIN_VERSION" {
-  default = "v0.4.0"
+  default = "v0.5.0"
 }
 
 # HADRON_VERSION is the tag of the Hadron base image used by every layer's
