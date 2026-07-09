@@ -43,7 +43,7 @@ RUN curl -L https://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.g
 ARG SQLITE3_VERSION=3.53.3
 RUN curl -L https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
 
-ARG LIBFFI_VERSION=3.6.0
+ARG LIBFFI_VERSION=3.7.0
 RUN curl -L https://github.com/libffi/libffi/releases/download/v${LIBFFI_VERSION}/libffi-${LIBFFI_VERSION}.tar.gz -o libffi.tar.gz
 
 
