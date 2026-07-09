@@ -13,7 +13,7 @@ variable "HADRON_TOOLCHAIN_VERSION" {
 # test stage. Renovate tracks this variable via the custom manager in
 # renovate.json and opens PRs when a newer semver tag is published to GHCR.
 variable "HADRON_VERSION" {
-  default = "v0.5.0"
+  default = "v0.5.1"
 }
 
 variable "REGISTRY" {
