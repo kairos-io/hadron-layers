@@ -19,7 +19,7 @@
 ##         "name": "git",
 ##         "title": "git",
 ##         "description": "Git version control system",
-##         "image": "ghcr.io/kairos-io/git",
+##         "image": "ghcr.io/kairos-io/hadron-layers/git",
 ##         "source": "https://github.com/kairos-io/hadron-layers",
 ##         "latest": "2.52.0",
 ##         "tags": [
@@ -64,19 +64,24 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
   first_tag=$(jq -r --arg t "$target" '.target[$t].tags[0] // ""' <<<"$bake")
   image="${first_tag%:*}"
 
-  ## The GHCR package name is expected to match the OCI title label (e.g.
-  ## `git`). Fall back to the image basename if the label is missing.
-  pkg="${title}"
-  if [[ -z "$pkg" || "$pkg" == "$target" ]]; then
+  ## The GHCR package name is the image path under the org namespace, e.g.
+  ## `ghcr.io/kairos-io/hadron-layers/git` -> `hadron-layers/git`. Fall back to
+  ## the image basename if the expected `ghcr.io/<namespace>/` prefix is absent.
+  pkg="${image#ghcr.io/${NAMESPACE}/}"
+  if [[ -z "$pkg" || "$pkg" == "$image" ]]; then
     pkg=$(basename "$image")
   fi
+
+  ## Path segments must be URL-encoded for the packages API (a nested package
+  ## name like `hadron-layers/git` needs its slash escaped to `%2F`).
+  pkg_enc="${pkg//\//%2F}"
 
   echo "  - ${target}: querying versions for ${NAMESPACE}/${pkg}..." >&2
 
   ## Fetch every published version. --paginate walks all pages.
   ## metadata.container.tags is an array (one image can carry multiple tags),
   ## expand into one entry per tag so the UI can present a flat history.
-  if ! versions_raw=$(gh api --paginate "/orgs/${NAMESPACE}/packages/container/${pkg}/versions" 2>/dev/null); then
+  if ! versions_raw=$(gh api --paginate "/orgs/${NAMESPACE}/packages/container/${pkg_enc}/versions" 2>/dev/null); then
     echo "    (failed to query versions — package private, missing, or token lacks read:packages)" >&2
     versions_raw='[]'
   fi

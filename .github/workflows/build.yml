@@ -117,7 +117,7 @@ jobs:
           push: false
           set: |
             *.platform=linux/${{ matrix.arch }}
-            *.output=${{ github.event_name != 'pull_request' && format('type=image,name=ghcr.io/kairos-io/{0},push-by-digest=true,name-canonical=true,push=true', matrix.layer) || 'type=cacheonly' }}
+            *.output=${{ github.event_name != 'pull_request' && format('type=image,name=ghcr.io/kairos-io/hadron-layers/{0},push-by-digest=true,name-canonical=true,push=true', matrix.layer) || 'type=cacheonly' }}
             *.tags=
             *.cache-from=type=gha,scope=${{ matrix.layer }}-${{ matrix.arch }}
             *.cache-to=type=gha,scope=${{ matrix.layer }}-${{ matrix.arch }},mode=max
@@ -203,7 +203,7 @@ jobs:
         env:
           LAYER: ${{ matrix.layer }}
           VERSION: ${{ steps.version.outputs.value }}
-          REGISTRY: ghcr.io/kairos-io
+          REGISTRY: ghcr.io/kairos-io/hadron-layers
         run: |
           docker buildx imagetools create \
             -t "$REGISTRY/$LAYER:$VERSION" \
@@ -213,5 +213,5 @@ jobs:
         env:
           LAYER: ${{ matrix.layer }}
           VERSION: ${{ steps.version.outputs.value }}
-          REGISTRY: ghcr.io/kairos-io
+          REGISTRY: ghcr.io/kairos-io/hadron-layers
         run: docker buildx imagetools inspect "$REGISTRY/$LAYER:$VERSION"

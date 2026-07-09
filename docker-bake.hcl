@@ -17,7 +17,7 @@ variable "HADRON_VERSION" {
 }
 
 variable "REGISTRY" {
-  default = "ghcr.io/kairos-io"
+  default = "ghcr.io/kairos-io/hadron-layers"
 }
 
 variable "TAG" {

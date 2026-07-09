@@ -2,13 +2,13 @@
 
 A collection of pre-built layers for [Hadron](https://github.com/kairos-io/hadron). Each layer compiles a software component from source using the Hadron toolchain and publishes a minimal OCI image containing only the runtime binaries and their shared-library dependencies.
 
-Images are published to `ghcr.io/kairos-io/<name>` and are indexed with copy-ready pull commands, tag history and pinned digests at [kairos-io.github.io/hadron-layers](https://kairos-io.github.io/hadron-layers/) (raw data at [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json), individual layer pages at `#/<layer>` and `#/<layer>/<tag>`).
+Images are published to `ghcr.io/kairos-io/hadron-layers/<name>` and are indexed with copy-ready pull commands, tag history and pinned digests at [kairos-io.github.io/hadron-layers](https://kairos-io.github.io/hadron-layers/) (raw data at [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json), individual layer pages at `#/<layer>` and `#/<layer>/<tag>`).
 
 They can be used to extend a Hadron base system:
 
 ```dockerfile
 FROM ghcr.io/kairos-io/hadron:VERSION
-COPY --from=ghcr.io/kairos-io/git:latest / /
+COPY --from=ghcr.io/kairos-io/hadron-layers/git:latest / /
 ```
 
 Or to create a sysextension with [Auroraboot](https://github.com/kairos-io/auroraboot).
@@ -17,9 +17,9 @@ Or to create a sysextension with [Auroraboot](https://github.com/kairos-io/auror
 
 | Layer | Image | Description |
 |-------|-------|-------------|
-| `git` | `ghcr.io/kairos-io/git` | Git version control system |
-| `gpg` | `ghcr.io/kairos-io/gpg` | GnuPG and its runtime libraries |
-| `fwupd` | `ghcr.io/kairos-io/fwupd` | Firmware update daemon |
+| `git` | `ghcr.io/kairos-io/hadron-layers/git` | Git version control system |
+| `gpg` | `ghcr.io/kairos-io/hadron-layers/gpg` | GnuPG and its runtime libraries |
+| `fwupd` | `ghcr.io/kairos-io/hadron-layers/fwupd` | Firmware update daemon |
 
 ## How it works
 
