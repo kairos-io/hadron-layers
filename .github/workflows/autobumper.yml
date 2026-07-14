@@ -24,7 +24,7 @@ jobs:
           - fwupd
     steps:
       - name: Install Updatecli
-        uses: updatecli/updatecli-action@v3.3.0
+        uses: updatecli/updatecli-action@v3.4.0
 
       - name: Bump ${{ matrix.config }}
         env:
