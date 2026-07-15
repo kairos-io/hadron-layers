@@ -49,7 +49,7 @@ RUN curl -L https://github.com/libffi/libffi/releases/download/v${LIBFFI_VERSION
 # libucontext provides POSIX ucontext functions absent from musl libc.
 # libsystemd.so and libudev.so.1 in the hadron toolchain were compiled
 # against it, so it must be present at link time and at runtime.
-ARG LIBUCONTEXT_VERSION=1.5.1
+ARG LIBUCONTEXT_VERSION=1.5.2
 RUN curl -L https://github.com/kaniini/libucontext/archive/refs/tags/libucontext-${LIBUCONTEXT_VERSION}.tar.gz -o libucontext.tar.gz
 
 
