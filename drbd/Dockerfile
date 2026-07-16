@@ -99,7 +99,12 @@ RUN ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
       --without-heartbeat --without-pacemaker --without-rgmanager --without-bashcompletion && \
     make -s -j"$(nproc)" && \
     make -s -j"$(nproc)" install DESTDIR=/dest && \
-    rm -rf /dest/usr/share/man
+    rm -rf /dest/usr/share/man && \
+    # Hadron uses UsrMerge: /var/run is a symlink to /run in the base image.
+    # drbd-utils installs /var/run/drbd/ as a real directory, which would
+    # cause "cannot copy to non-directory" when overlaying this layer.
+    # Runtime directories are created at boot via the shipped tmpfiles.d config.
+    rm -rf /dest/var/run
 
 # ── Assemble module index ───────────────────────────────────────────────────
 # Add the freshly built module to the base image's module tree and re-run depmod
