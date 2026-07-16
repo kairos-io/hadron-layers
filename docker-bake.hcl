@@ -28,6 +28,13 @@ variable "REPO_URL" {
   default = "https://github.com/kairos-io/hadron-layers"
 }
 
+# PLATFORMS is the set of target platforms every layer is built for. Override
+# per-target with `--set <target>.platform=linux/amd64` when needed; bake's
+# variable-override syntax doesn't support list-typed variables.
+variable "PLATFORMS" {
+  default = ["linux/amd64", "linux/arm64"]
+}
+
 # common_labels returns the OCI image labels shared by every layer. The
 # per-layer title and description are merged in at the target level.
 function "common_labels" {
@@ -55,7 +62,7 @@ target "git" {
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("git", "Git version control system")
-  platforms = ["linux/amd64", "linux/arm64"]
+  platforms = PLATFORMS
   tags      = ["${REGISTRY}/git:${TAG}"]
 }
 
@@ -68,7 +75,7 @@ target "gpg" {
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("gpg", "GnuPG and its runtime libraries")
-  platforms = ["linux/amd64", "linux/arm64"]
+  platforms = PLATFORMS
   tags      = ["${REGISTRY}/gpg:${TAG}"]
 }
 
@@ -81,7 +88,7 @@ target "fwupd" {
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("fwupd", "Firmware update daemon")
-  platforms = ["linux/amd64", "linux/arm64"]
+  platforms = PLATFORMS
   tags      = ["${REGISTRY}/fwupd:${TAG}"]
 }
 
@@ -93,6 +100,6 @@ target "drbd" {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
   }
   labels    = common_labels("drbd", "Out-of-tree DRBD 9 kernel module and drbd-utils")
-  platforms = ["linux/amd64", "linux/arm64"]
+  platforms = PLATFORMS
   tags      = ["${REGISTRY}/drbd:${TAG}"]
 }
