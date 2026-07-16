@@ -4,8 +4,9 @@
 # DRBD 8 the kernel ships, it adds multi-node replication and quorum, which
 # LINSTOR/Piraeus require. Because it is an *update* to a module that also
 # exists in-tree, it is installed under
-#     /lib/modules/$(KERNELRELEASE)/updates/
+#     /usr/lib/modules/$(KERNELRELEASE)/updates/
 # so depmod resolves it ahead of the in-tree kernel/ copy.
+# (Hadron uses UsrMerge: /lib is a symlink to usr/lib.)
 #
 # HADRON_TOOLCHAIN_VERSION and HADRON_VERSION default to a known-good pair but
 # are build ARGs on purpose: a kernel module is tied to the exact kernel of the
@@ -107,6 +108,9 @@ RUN ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
 # in-tree modules already live in the base image at the same paths, so shipping
 # them again would only bloat the layer.
 FROM ghcr.io/kairos-io/hadron:${HADRON_VERSION} AS assemble
+# The kernel build system always installs to lib/modules/ regardless of
+# UsrMerge. Hadron has /lib -> usr/lib, so this COPY follows the symlink and
+# lands the modules at /usr/lib/modules/ inside the assemble layer.
 COPY --from=module-builder /dest/lib/modules/ /lib/modules/
 # The base image ships exactly one kernel; derive its release from the single
 # directory name (the toolchain's /usr/share/kernel-misc is not present here).
