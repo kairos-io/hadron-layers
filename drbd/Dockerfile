@@ -103,7 +103,8 @@ RUN ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
     # Hadron uses UsrMerge: /var/run is a symlink to /run in the base image.
     # drbd-utils installs /var/run/drbd/ as a real directory, which would
     # cause "cannot copy to non-directory" when overlaying this layer.
-    # Runtime directories are created at boot via the shipped tmpfiles.d config.
+    # The --with-tmpfilesdir=/usr/lib/tmpfiles.d flag above installs a
+    # tmpfiles.d config that re-creates the runtime directory at boot instead.
     rm -rf /dest/var/run
 
 # ── Assemble module index ───────────────────────────────────────────────────
