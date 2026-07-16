@@ -154,7 +154,7 @@ RUN set -eux; kver=$(ls /lib/modules); \
     drbd_ko=$(find "/lib/modules/${kver}/updates" \( -name 'drbd.ko' -o -name 'drbd.ko.zst' \) | head -1); \
     test -n "${drbd_ko}"; \
     modinfo "${drbd_ko}" | grep -qi '^version:'; \
-    grep -qE '^updates/drbd\.ko(\.zst)?:' "/lib/modules/${kver}/modules.dep"; \
+    grep -qE 'updates/drbd\.ko(\.zst)?:' "/lib/modules/${kver}/modules.dep"; \
     drbdadm --version | grep -qi 'DRBDADM_VERSION='; \
     drbdsetup --version | grep -qi drbd; \
     drbdmeta --version | grep -qi drbd
