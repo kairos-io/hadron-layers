@@ -25,7 +25,7 @@ RUN curl -L https://gnupg.org/ftp/gcrypt/libksba/libksba-${LIBKSBA_VERSION}.tar.
 ARG NPTH_VERSION=1.8
 RUN curl -L https://gnupg.org/ftp/gcrypt/npth/npth-${NPTH_VERSION}.tar.bz2 -o npth.tar.bz2
 
-ARG SQLITE3_VERSION=3.53.3
+ARG SQLITE3_VERSION=3.53.4
 RUN curl -L https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
 
 RUN tar -xf gnupg.tar.bz2 && mv gnupg-* gnupg
