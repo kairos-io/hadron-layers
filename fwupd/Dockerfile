@@ -40,7 +40,7 @@ RUN curl -L https://gitlab.gnome.org/GNOME/json-glib/-/archive/${JSON_GLIB_VERSI
 ARG GETTEXT_VERSION=1.0
 RUN curl -L https://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext.tar.gz
 
-ARG SQLITE3_VERSION=3.53.3
+ARG SQLITE3_VERSION=3.53.4
 RUN curl -L https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
 
 ARG LIBFFI_VERSION=3.7.1
