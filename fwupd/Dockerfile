@@ -10,7 +10,7 @@ RUN mkdir -p /output
 WORKDIR /sources
 
 # fwupd
-ARG FWUPD_VERSION=2.1.6
+ARG FWUPD_VERSION=2.1.7
 RUN curl -L https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fwupd-${FWUPD_VERSION}.tar.xz -o fwupd.tar.xz
 
 # glib. GNOME sources are grouped by major.minor series under
@@ -25,7 +25,7 @@ RUN GLIB_SERIES="${GLIB_VERSION%.*}" && \
 ARG PCRE2_VERSION=10.47
 RUN curl -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz -o pcre2.tar.gz
 
-ARG LIBXMLB_VERSION=0.3.28
+ARG LIBXMLB_VERSION=0.3.29
 RUN curl -L https://github.com/hughsie/libxmlb/releases/download/${LIBXMLB_VERSION}/libxmlb-${LIBXMLB_VERSION}.tar.xz -o libxmlb.tar.xz
 
 ARG LIBUSB_VERSION=1.0.30
