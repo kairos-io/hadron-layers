@@ -18,7 +18,7 @@ RUN curl -L https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fw
 # (2.86.x, 2.88.x, ...); odd minor versions are dev releases. Pin to the
 # latest stable series and derive the directory segment from the version
 # so future bumps do not have to touch the URL.
-ARG GLIB_VERSION=2.88.2
+ARG GLIB_VERSION=2.88.3
 RUN GLIB_SERIES="${GLIB_VERSION%.*}" && \
     curl -L "https://download.gnome.org/sources/glib/${GLIB_SERIES}/glib-${GLIB_VERSION}.tar.xz" -o glib.tar.xz
 
