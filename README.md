@@ -11,7 +11,27 @@ FROM ghcr.io/kairos-io/hadron:VERSION
 COPY --from=ghcr.io/kairos-io/hadron-layers/git:latest / /
 ```
 
-Or to create a sysextension with [Auroraboot](https://github.com/kairos-io/auroraboot).
+Each build also publishes unsigned system extension images as OCI artifacts:
+
+```text
+ghcr.io/kairos-io/hadron-layers/sysext/<name>:<software-version>-<arch>
+```
+
+Use an immutable digest from the releases index when you pull one:
+
+```bash
+oras pull ghcr.io/kairos-io/hadron-layers/sysext/git@sha256:<manifest-digest>
+```
+
+The artifact contains `<name>.sysext.raw` with media type
+`application/vnd.kairos.sysext.raw`. These public artifacts are unsigned
+because Trusted Boot requires keys that belong to the target deployment. Sign
+the raw image with those keys before using it in a Trusted Boot environment.
+
+Each layer version in `releases.json` has a `sysext` object. Available
+architectures appear as `tags[].sysext.amd64.oci` and
+`tags[].sysext.arm64.oci`; each value is a digest-pinned OCI reference. The
+object is empty when no sysext is available for that version.
 
 ## Available layers
 

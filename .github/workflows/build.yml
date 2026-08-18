@@ -88,6 +88,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Keep this convention in sync with the merge job below.
+      - name: Extract software version
+        id: version
+        env:
+          LAYER: ${{ matrix.layer }}
+        run: |
+          VERSION=$(grep -E '^ARG [A-Z][A-Z_0-9]*_VERSION=' "$LAYER/Dockerfile" \
+            | grep -vE '^ARG (HADRON_TOOLCHAIN_VERSION|HADRON_VERSION)=' \
+            | head -1 \
+            | cut -d= -f2)
+          if [[ -z "$VERSION" ]]; then
+            echo "Error: no software _VERSION ARG found in $LAYER/Dockerfile"
+            exit 1
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
       # Build the Dockerfile's `test` stage and let any RUN in it execute. A
       # non-zero exit fails this job and prevents the build below from running.
       # Now runs natively on this arch, so arm64 gets real test coverage cheaply.
@@ -117,7 +133,7 @@ jobs:
           push: false
           set: |
             *.platform=linux/${{ matrix.arch }}
-            *.output=${{ github.event_name != 'pull_request' && format('type=image,name=ghcr.io/kairos-io/hadron-layers/{0},push-by-digest=true,name-canonical=true,push=true', matrix.layer) || 'type=cacheonly' }}
+            *.output=${{ github.event_name != 'pull_request' && format('type=image,name=ghcr.io/kairos-io/hadron-layers/{0},push-by-digest=true,name-canonical=true,push=true', matrix.layer) || format('type=docker,name=hadron-layer-{0}:{1}', matrix.layer, matrix.arch) }}
             *.tags=
             *.cache-from=type=gha,scope=${{ matrix.layer }}-${{ matrix.arch }}
             *.cache-to=type=gha,scope=${{ matrix.layer }}-${{ matrix.arch }},mode=max
@@ -147,6 +163,56 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
+
+      - name: Set up ORAS
+        if: github.event_name != 'pull_request'
+        uses: oras-project/setup-oras@v1
+        with:
+          version: 1.3.0
+
+      # AuroraBoot creates verity metadata but omits signature partitions when
+      # no deployment-specific key and certificate are supplied.
+      - name: Create unsigned sysext
+        env:
+          ARCH: ${{ matrix.arch }}
+          EVENT_NAME: ${{ github.event_name }}
+          LAYER: ${{ matrix.layer }}
+          METADATA: ${{ steps.build.outputs.metadata }}
+          VERSION: ${{ steps.version.outputs.value }}
+          REGISTRY: ghcr.io/kairos-io/hadron-layers
+          AURORABOOT_IMAGE: quay.io/kairos/auroraboot:v0.26.2
+        run: |
+          mkdir -p /tmp/sysext
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            source_image="hadron-layer-${LAYER}:${ARCH}"
+          else
+            digest=$(jq -r --arg t "$LAYER" '.[$t]."containerimage.digest"' <<<"$METADATA")
+            if [[ -z "$digest" || "$digest" == "null" ]]; then
+              echo "Error: no architecture-specific digest for $LAYER" >&2
+              exit 1
+            fi
+            source_image="${REGISTRY}/${LAYER}@${digest}"
+          fi
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v /tmp/sysext:/output \
+            "$AURORABOOT_IMAGE" sysext \
+            --arch "$ARCH" --output /output "$LAYER" "$source_image"
+          test -s "/tmp/sysext/${LAYER}.sysext.raw"
+
+      - name: Push sysext artifact
+        if: github.event_name != 'pull_request'
+        working-directory: /tmp/sysext
+        env:
+          ARCH: ${{ matrix.arch }}
+          LAYER: ${{ matrix.layer }}
+          VERSION: ${{ steps.version.outputs.value }}
+          REGISTRY: ghcr.io/kairos-io/hadron-layers
+        run: |
+          oras push \
+            --artifact-type application/vnd.kairos.sysext.raw \
+            "${REGISTRY}/sysext/${LAYER}:${VERSION}-${ARCH}" \
+            "${LAYER}.sysext.raw:application/vnd.kairos.sysext.raw"
 
   # Combine the per-arch digests for each layer into a single multi-arch image
   # tag. Skipped on pull_request (nothing was pushed there).

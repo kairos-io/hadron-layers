@@ -90,8 +90,33 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
       .[]
       | . as $v
       | (.metadata.container.tags // [])[]
-      | {tag: ., digest: $v.name, created: $v.created_at}
+      | {tag: ., digest: $v.name, created: $v.created_at, sysext: {}}
     ] | sort_by(.created) | reverse' <<<"$versions_raw")
+
+  ## Sysext artifacts use a separate nested package and architecture-suffixed
+  ## tags. A missing package is expected while artifacts are being introduced,
+  ## so leave the layer tags intact with an empty sysext object.
+  sysext_pkg="hadron-layers/sysext/${target}"
+  sysext_pkg_enc="${sysext_pkg//\//%2F}"
+  if ! sysext_raw=$(gh api --paginate "/orgs/${NAMESPACE}/packages/container/${sysext_pkg_enc}/versions" 2>/dev/null); then
+    echo "    (no sysext package found for ${target})" >&2
+    sysext_raw='[]'
+  fi
+
+  sysext_entries=$(jq --arg image "ghcr.io/${NAMESPACE}/${sysext_pkg}" '[
+      .[]
+      | . as $v
+      | (.metadata.container.tags // [])[]
+      | capture("^(?<version>.*)-(?<arch>amd64|arm64)$")?
+      | select(. != null)
+      | {version, arch, oci: ($image + "@" + $v.name)}
+    ]' <<<"$sysext_raw")
+
+  tags=$(jq --argjson artifacts "$sysext_entries" '
+    map(. as $tag
+      | .sysext = (reduce ($artifacts[] | select(.version == $tag.tag)) as $artifact
+          ({}; .[$artifact.arch] = {oci: $artifact.oci})))
+  ' <<<"$tags")
 
   ## "Latest" is the highest-semver tag if any parse as semver, else the newest by date.
   latest=$(jq -r '
