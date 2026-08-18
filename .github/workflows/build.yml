@@ -166,7 +166,7 @@ jobs:
 
       - name: Set up ORAS
         if: github.event_name != 'pull_request'
-        uses: oras-project/setup-oras@v1
+        uses: oras-project/setup-oras@v2
         with:
           version: 1.3.0
 
