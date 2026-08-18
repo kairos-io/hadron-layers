@@ -19,7 +19,9 @@ ghcr.io/kairos-io/hadron-layers/sysext/<name>:<software-version>-<arch>
 ```
 
 The Git layer is temporarily excluded because its exported OCI layer contains
-hardlink entries that AuroraBoot v0.26.2 cannot extract.
+hardlink entries that AuroraBoot v0.26.2 cannot extract. Edit the
+`SYSEXT_SKIP_LAYERS` list in `.github/workflows/build.yml` to change which
+packages skip sysext creation and publication.
 
 Use an immutable digest from the releases index when you pull one:
 

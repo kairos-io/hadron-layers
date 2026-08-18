@@ -4,12 +4,20 @@ set -euo pipefail
 
 workflow=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/build.yml
 
-create_condition=$(awk '
-  /- name: Create unsigned sysext/ { found = 1; next }
-  found && /if:/ { print; exit }
-  found && /env:/ { exit }
+skip_list=$(awk '
+  /SYSEXT_SKIP_LAYERS:/ { print; exit }
 ' "$workflow")
 
-[[ "$create_condition" == *"matrix.layer != 'git'"* ]]
+[[ "$skip_list" == *'["git"]'* ]]
+
+for step in 'Create unsigned sysext' 'Push sysext artifact'; do
+  condition=$(awk -v step="$step" '
+    index($0, "- name: " step) { found = 1; next }
+    found && /if:/ { print; exit }
+    found && /env:/ { exit }
+  ' "$workflow")
+
+  [[ "$condition" == *'!contains(fromJSON(env.SYSEXT_SKIP_LAYERS), matrix.layer)'* ]]
+done
 
 echo 'build workflow sysext exclusions pass'

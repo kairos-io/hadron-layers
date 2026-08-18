@@ -66,6 +66,8 @@ jobs:
     name: Build ${{ matrix.layer }} (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     needs: discover
+    env:
+      SYSEXT_SKIP_LAYERS: '["git"]'
     strategy:
       fail-fast: false
       matrix:
@@ -176,7 +178,7 @@ jobs:
       # AuroraBoot creates verity metadata but omits signature partitions when
       # no deployment-specific key and certificate are supplied.
       - name: Create unsigned sysext
-        if: matrix.layer != 'git'
+        if: ${{ !contains(fromJSON(env.SYSEXT_SKIP_LAYERS), matrix.layer) }}
         env:
           ARCH: ${{ matrix.arch }}
           EVENT_NAME: ${{ github.event_name }}
@@ -205,7 +207,7 @@ jobs:
           test -s "/tmp/sysext/${LAYER}.sysext.raw"
 
       - name: Push sysext artifact
-        if: github.event_name != 'pull_request'
+        if: ${{ github.event_name != 'pull_request' && !contains(fromJSON(env.SYSEXT_SKIP_LAYERS), matrix.layer) }}
         working-directory: /tmp/sysext
         env:
           ARCH: ${{ matrix.arch }}
