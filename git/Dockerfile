@@ -27,7 +27,6 @@ RUN make install prefix=/usr DESTDIR=/output NO_TCLTK=YesPlease NO_GETTEXT=YesPl
 # runtime binaries, libexec helpers, shared libraries, and data files.
 FROM ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION} AS merge
 COPY --from=builder /output/ /output/
-COPY materialize-hardlinks.sh /usr/local/bin/materialize-hardlinks
 RUN find /output -name "*.h"  -delete && \
     find /output -name "*.a"  -delete && \
     find /output -name "*.la" -delete && \
@@ -36,8 +35,7 @@ RUN find /output -name "*.h"  -delete && \
            /output/usr/share/man \
            /output/usr/share/doc \
            /output/usr/share/info \
-           /output/usr/share/aclocal && \
-    materialize-hardlinks /output
+           /output/usr/share/aclocal
 
 # Final layer: only the built git binaries and their runtime dependencies.
 # Use as a layer on top of Hadron:

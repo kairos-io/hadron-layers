@@ -37,8 +37,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Test packaging helpers
-        run: ./git/materialize-hardlinks_test.sh
+      - name: Test workflow policy
+        run: ./.github/workflows/build_test.sh
 
       - name: Enumerate layer directories
         id: discover
@@ -176,6 +176,7 @@ jobs:
       # AuroraBoot creates verity metadata but omits signature partitions when
       # no deployment-specific key and certificate are supplied.
       - name: Create unsigned sysext
+        if: matrix.layer != 'git'
         env:
           ARCH: ${{ matrix.arch }}
           EVENT_NAME: ${{ github.event_name }}
