@@ -33,12 +33,24 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
+      sysext_skip_layers: ${{ steps.settings.outputs.sysext_skip_layers }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
       - name: Test workflow policy
         run: ./.github/workflows/build_test.sh
+
+      - name: Read publishing settings
+        id: settings
+        run: |
+          ruby -ryaml -rjson -e '
+            config = YAML.safe_load_file("publishing.yaml")
+            skip_layers = config.dig("publishing", "sysext", "skip") || []
+            abort "publishing.sysext.skip must be a list of layer names" unless
+              skip_layers.is_a?(Array) && skip_layers.all? { |layer| layer.is_a?(String) }
+            puts "sysext_skip_layers=#{JSON.generate(skip_layers)}"
+          ' >> "$GITHUB_OUTPUT"
 
       - name: Enumerate layer directories
         id: discover
@@ -66,8 +78,6 @@ jobs:
     name: Build ${{ matrix.layer }} (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     needs: discover
-    env:
-      SYSEXT_SKIP_LAYERS: '["git"]'
     strategy:
       fail-fast: false
       matrix:
@@ -178,7 +188,7 @@ jobs:
       # AuroraBoot creates verity metadata but omits signature partitions when
       # no deployment-specific key and certificate are supplied.
       - name: Create unsigned sysext
-        if: ${{ !contains(fromJSON(env.SYSEXT_SKIP_LAYERS), matrix.layer) }}
+        if: ${{ !contains(fromJSON(needs.discover.outputs.sysext_skip_layers), matrix.layer) }}
         env:
           ARCH: ${{ matrix.arch }}
           EVENT_NAME: ${{ github.event_name }}
@@ -207,7 +217,7 @@ jobs:
           test -s "/tmp/sysext/${LAYER}.sysext.raw"
 
       - name: Push sysext artifact
-        if: ${{ github.event_name != 'pull_request' && !contains(fromJSON(env.SYSEXT_SKIP_LAYERS), matrix.layer) }}
+        if: ${{ github.event_name != 'pull_request' && !contains(fromJSON(needs.discover.outputs.sysext_skip_layers), matrix.layer) }}
         working-directory: /tmp/sysext
         env:
           ARCH: ${{ matrix.arch }}
