@@ -1,0 +1,4 @@
+publishing:
+  sysext:
+    skip:
+      - git

@@ -11,11 +11,19 @@ FROM ghcr.io/kairos-io/hadron:VERSION
 COPY --from=ghcr.io/kairos-io/hadron-layers/git:latest / /
 ```
 
-Each build also publishes unsigned system extension images as OCI artifacts:
+Each compatible layer build also publishes unsigned system extension images as
+OCI artifacts:
 
 ```text
 ghcr.io/kairos-io/hadron-layers/sysext/<name>:<software-version>-<arch>
 ```
+
+The Git layer is temporarily excluded because its exported OCI layer contains
+hardlink entries that AuroraBoot v0.26.2 cannot extract. Edit the
+`publishing.sysext.skip` list in `publishing.yaml` to change which packages
+skip sysext creation and publication. This file contains repository publishing
+settings so more artifact policies can be added without embedding them in the
+workflow.
 
 Use an immutable digest from the releases index when you pull one:
 
