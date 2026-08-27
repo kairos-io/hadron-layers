@@ -13,13 +13,13 @@ RUN curl -L https://gnupg.org/ftp/gcrypt/gnupg/gnupg-${GNUPG_VERSION}.tar.bz2 -o
 ARG LIBGPG_ERROR_VERSION=1.61
 RUN curl -L https://gnupg.org/ftp/gcrypt/gpgrt/libgpg-error-${LIBGPG_ERROR_VERSION}.tar.bz2 -o libgpg-error.tar.bz2
 
-ARG LIBGCRYPT_VERSION=1.12.2
+ARG LIBGCRYPT_VERSION=1.12.3
 RUN curl -L https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-${LIBGCRYPT_VERSION}.tar.bz2 -o libgcrypt.tar.bz2
 
 ARG LIBASSUAN_VERSION=3.0.2
 RUN curl -L https://gnupg.org/ftp/gcrypt/libassuan/libassuan-${LIBASSUAN_VERSION}.tar.bz2 -o libassuan.tar.bz2
 
-ARG LIBKSBA_VERSION=1.8.0
+ARG LIBKSBA_VERSION=1.8.1
 RUN curl -L https://gnupg.org/ftp/gcrypt/libksba/libksba-${LIBKSBA_VERSION}.tar.bz2 -o libksba.tar.bz2
 
 ARG NPTH_VERSION=1.8
