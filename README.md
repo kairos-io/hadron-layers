@@ -41,6 +41,11 @@ architectures appear as `tags[].sysext.amd64.oci` and
 `tags[].sysext.arm64.oci`; each value is a digest-pinned OCI reference. The
 object is empty when no sysext is available for that version.
 
+> **Found a bug, or want to request a feature?** Open it on
+> [kairos-io/kairos](https://github.com/kairos-io/kairos/issues), including
+> issues about this repository. Every Kairos issue lives in one place, so you
+> never have to work out which repository to file against.
+
 ## Available layers
 
 | Layer | Image | Description |
