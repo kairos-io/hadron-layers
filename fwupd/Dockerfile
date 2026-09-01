@@ -22,7 +22,7 @@ ARG GLIB_VERSION=2.88.3
 RUN GLIB_SERIES="${GLIB_VERSION%.*}" && \
     curl -L "https://download.gnome.org/sources/glib/${GLIB_SERIES}/glib-${GLIB_VERSION}.tar.xz" -o glib.tar.xz
 
-ARG PCRE2_VERSION=10.47
+ARG PCRE2_VERSION=10.48
 RUN curl -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz -o pcre2.tar.gz
 
 ARG LIBXMLB_VERSION=0.3.29
