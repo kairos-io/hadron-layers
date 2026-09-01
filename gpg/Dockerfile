@@ -7,7 +7,7 @@ RUN mkdir -p /output
 
 WORKDIR /sources
 
-ARG GNUPG_VERSION=2.5.21
+ARG GNUPG_VERSION=2.5.22
 RUN curl -L https://gnupg.org/ftp/gcrypt/gnupg/gnupg-${GNUPG_VERSION}.tar.bz2 -o gnupg.tar.bz2
 
 ARG LIBGPG_ERROR_VERSION=1.61
