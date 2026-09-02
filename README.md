@@ -54,6 +54,7 @@ object is empty when no sysext is available for that version.
 | `gpg` | `ghcr.io/kairos-io/hadron-layers/gpg` | GnuPG and its runtime libraries |
 | `fwupd` | `ghcr.io/kairos-io/hadron-layers/fwupd` | Firmware update daemon |
 | `drbd` | `ghcr.io/kairos-io/hadron-layers/drbd` | Out-of-tree DRBD 9 kernel module and drbd-utils |
+| `tailscale` | `ghcr.io/kairos-io/hadron-layers/tailscale` | Tailscale node agent (tailscaled) and CLI |
 
 ## How it works
 
@@ -63,6 +64,27 @@ Each layer lives in its own subdirectory (e.g. `git/Dockerfile`) and follows thi
 2. **Merge stage** – collects all build outputs, then strips dev artifacts (headers `*.h`, static libs `*.a`, libtool archives `*.la`, pkg-config files `*.pc`, man pages, docs). Only runtime files remain.
 3. **Final `default` stage** – `FROM scratch`, copying the filtered output. This is the published image.
 4. **`test` stage** – `FROM ghcr.io/kairos-io/hadron:${HADRON_VERSION}`, layered with `default`, runs offline smoke tests (`RUN`) that exercise the built binaries. CI builds this stage first (amd64 only); if any `RUN` fails, the release build is skipped.
+
+### Go layers
+
+The `tailscale` layer is written in Go and deviates from the pattern above:
+
+- `hadron-toolchain` is a musl **C** toolchain and ships no Go, so the build
+  stage uses the upstream `golang` image. With `CGO_ENABLED=0` the binaries are
+  fully static, which is also how Tailscale builds its own release binaries, so
+  nothing links against the builder's libc and the layer drops onto Hadron
+  unchanged. Renovate bumps the `golang` tag on the `FROM` line.
+- There is no merge/strip stage: `go build` emits only the binaries, so there
+  are no headers, static libs, man pages or docs to remove.
+- The layer also ships service wiring under `/usr`, and nothing under `/etc`,
+  so it works as a system extension: `tailscaled.service` carries in-unit
+  defaults for `PORT` and `FLAGS` and treats `/etc/default/tailscaled` as an
+  optional override, it is enabled statically through
+  `/usr/lib/systemd/system/multi-user.target.wants/`, and a `tmpfiles.d`
+  drop-in seeds `/etc/default/tailscaled` from `/usr/share/factory` on first
+  boot. `tailscaled` shells out to `iptables` (nft backend) for its netfilter
+  rules, which the Hadron base image provides; the kernel needs `CONFIG_TUN`,
+  which Hadron builds as a module.
 
 ### Kernel-module layers
 
@@ -75,12 +97,12 @@ The `drbd` layer is an **out-of-tree kernel module** and deviates from the patte
 
 ## Toolchain and base versions
 
-`HADRON_TOOLCHAIN_VERSION` (used by every layer's build stage) and `HADRON_VERSION` (used by every layer's test stage) are both defined **once** in [`docker-bake.hcl`](docker-bake.hcl). Updatecli bumps `HADRON_TOOLCHAIN_VERSION` and Renovate bumps `HADRON_VERSION` — no Dockerfile needs touching. All layers pick up the new versions on the next build.
+`HADRON_TOOLCHAIN_VERSION` (used by the build stage of every layer that compiles against the toolchain) and `HADRON_VERSION` (used by every layer's test stage) are both defined **once** in [`docker-bake.hcl`](docker-bake.hcl). Updatecli bumps `HADRON_TOOLCHAIN_VERSION` and Renovate bumps `HADRON_VERSION` — no Dockerfile needs touching. All layers pick up the new versions on the next build.
 
 ## Automation
 
 - **Build & publish** – `.github/workflows/build.yml` runs on every push to `main` via `docker buildx bake`, building multi-arch images (`linux/amd64`, `linux/arm64`) and pushing to GHCR.
-- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd dependencies). Renovate handles action pins and other dependencies.
+- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, tailscale). Renovate handles action pins and other dependencies.
 - **Auto-approve** – `.github/workflows/autoapprove.yml` automatically approves and enables squash-merge on PRs opened by the updatecli bots (`github-actions[bot]`, `ci-robbot`) and Renovate (`renovate[bot]`).
 - **Releases page** – `.github/workflows/pages.yml` regenerates [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json) from the GHCR package versions API and deploys `site/index.html` to GitHub Pages after every successful main/tag build.
 

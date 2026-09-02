@@ -23,6 +23,7 @@ jobs:
           - gpg
           - fwupd
           - drbd
+          - tailscale
     steps:
       - name: Install Updatecli
         uses: updatecli/updatecli-action@v3.6.0
