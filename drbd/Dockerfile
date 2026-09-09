@@ -13,7 +13,7 @@
 # image it is built against. The consumer must run a Hadron release whose
 # kernel matches this toolchain. In this repository's CI the value is supplied
 # centrally from docker-bake.hcl.
-ARG HADRON_TOOLCHAIN_VERSION=v0.5.1
+ARG HADRON_TOOLCHAIN_VERSION=v0.5.2
 
 # ── Kernel module ───────────────────────────────────────────────────────────
 # The toolchain image ships the kernel .config, Module.symvers and the release
