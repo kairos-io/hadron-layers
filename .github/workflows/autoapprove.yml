@@ -47,7 +47,32 @@ jobs:
       # PAT_TOKEN (ci-robbot) cannot be used here because ci-robbot is only a
       # collaborator on the fork and lacks MergePullRequest permission on the
       # target repository.
+      #
+      # Queueing auto-merge needs "Allow auto-merge" turned on in the repo
+      # settings, which only an admin can do. When it is off, `gh pr merge
+      # --auto` exits non-zero with "Auto merge is not allowed for this
+      # repository", which used to fail this job and leave a red check on
+      # every bot PR even though the approve above had succeeded. Treat only
+      # that one cause as a skip and keep failing on everything else (missing
+      # permissions, a conflicted PR, a closed PR), so a genuine problem is
+      # still visible.
+      #
+      # The repo's allow_auto_merge field is not readable by GITHUB_TOKEN
+      # (the REST API only returns it to admins), so this checks the error
+      # rather than the setting.
       - name: Enable auto-merge
-        run: gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
+        run: |
+          set -o pipefail
+          if out=$(gh pr merge --auto --squash "${PR_URL}" 2>&1); then
+            printf '%s\n' "$out"
+            exit 0
+          fi
+          printf '%s\n' "$out"
+          if printf '%s' "$out" | grep -qF 'Auto merge is not allowed for this repository'; then
+            echo "::notice title=Auto-merge not enabled::PR approved, but auto-merge could not be queued because \"Allow auto-merge\" is disabled on this repository. A maintainer has to merge this PR, or enable the setting in Settings > General > Pull Requests."
+            exit 0
+          fi
+          exit 1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
