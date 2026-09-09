@@ -11,7 +11,7 @@ sources:
       lsremote: true
       versionfilter:
         kind: regex/semver
-        regex: '^drbd-9\.[0-9]+\.[0-9]+$'
+        regex: '^drbd-(9\.[0-9]+\.[0-9]+)$'
         pattern: "*"
     transformers:
       - trimprefix: drbd-
@@ -25,7 +25,7 @@ sources:
       lsremote: true
       versionfilter:
         kind: regex/semver
-        regex: '^v9\.[0-9]+\.[0-9]+$'
+        regex: '^v(9\.[0-9]+\.[0-9]+)$'
         pattern: "*"
     transformers:
       - trimprefix: v
