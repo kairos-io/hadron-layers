@@ -1,0 +1,8 @@
+# Port to listen on for incoming VPN packets. Remote nodes learn the port
+# automatically; set it explicitly when an external firewall needs a fixed
+# value.
+PORT="41641"
+
+# Extra flags for tailscaled, for example:
+#   FLAGS="--tun=userspace-networking"
+FLAGS=""

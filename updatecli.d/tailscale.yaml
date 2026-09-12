@@ -1,0 +1,29 @@
+---
+name: tailscale layer version updates
+
+sources:
+  tailscale:
+    # Tailscale publishes stable releases on even minor versions (1.100.x,
+    # 1.102.x) and uses odd minors for development tags (v1.103.0-pre). Track
+    # even minors only, which also filters out the -pre tags.
+    kind: gittag
+    spec:
+      url: https://github.com/tailscale/tailscale.git
+      lsremote: true
+      versionfilter:
+        kind: regex/semver
+        regex: '^v[0-9]+\.[0-9]*[02468]\.[0-9]+$'
+        pattern: "*"
+    transformers:
+      - trimprefix: v
+
+targets:
+  tailscale_version:
+    name: 'TAILSCALE_VERSION in tailscale/Dockerfile updated to {{ source "tailscale" }}'
+    kind: dockerfile
+    spec:
+      file: tailscale/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: TAILSCALE_VERSION
+    sourceid: tailscale
