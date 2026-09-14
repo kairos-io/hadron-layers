@@ -50,7 +50,7 @@ function "common_labels" {
 }
 
 group "default" {
-  targets = ["git", "gpg", "fwupd", "drbd"]
+  targets = ["git", "gpg", "fwupd", "drbd", "tailscale"]
 }
 
 target "git" {
@@ -102,4 +102,28 @@ target "drbd" {
   labels    = common_labels("drbd", "Out-of-tree DRBD 9 kernel module and drbd-utils")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/drbd:${TAG}"]
+}
+
+# Tailscale builds from the upstream golang image rather than the toolchain
+# (see tailscale/Dockerfile), so it takes no HADRON_TOOLCHAIN_VERSION.
+target "tailscale" {
+  context    = "tailscale"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_VERSION = HADRON_VERSION
+  }
+  # Spelled out rather than using common_labels(): that helper hardcodes
+  # org.opencontainers.image.base.name to the toolchain image, which this
+  # layer is not built from.
+  labels = {
+    "org.opencontainers.image.title"       = "tailscale"
+    "org.opencontainers.image.description" = "Tailscale node agent (tailscaled) and CLI"
+    "org.opencontainers.image.source"      = REPO_URL
+    "org.opencontainers.image.url"         = REPO_URL
+    "org.opencontainers.image.vendor"      = "Kairos"
+    "org.opencontainers.image.base.name"   = "docker.io/library/golang:1.27.1-alpine"
+  }
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/tailscale:${TAG}"]
 }
