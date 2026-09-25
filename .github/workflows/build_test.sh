@@ -33,3 +33,27 @@ for step in 'Create unsigned sysext' 'Push sysext artifact'; do
 done
 
 echo 'build workflow sysext exclusions pass'
+
+# A regex/semver version filter reads the version out of the regex's first
+# capture group, so a regex without one matches every tag and keeps none.
+# updatecli then fails the source with "versions list empty" and never names
+# the cause, and because the autobumper only runs on a nightly schedule the
+# manifest is already merged by the time anyone sees it. Catch it on the pull
+# request instead.
+ungrouped=$(awk '
+  /kind: *regex\/semver/ { armed = 1; next }
+  armed && /^[[:space:]]*regex:/ {
+    armed = 0
+    probe = $0
+    gsub(/\(\?:/, "", probe)
+    if (probe !~ /\(/) print FILENAME ":" FNR ":" $0
+  }
+' "$repository"/updatecli.d/*.yaml)
+
+if [[ -n "$ungrouped" ]]; then
+  printf '%s\n' "$ungrouped" >&2
+  echo "the regex/semver versionfilter above has no capture group: wrap the version in ( ) or updatecli reports \"versions list empty\"" >&2
+  exit 1
+fi
+
+echo 'updatecli regex/semver capture groups pass'
