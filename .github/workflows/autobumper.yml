@@ -26,7 +26,7 @@ jobs:
           - tailscale
     steps:
       - name: Install Updatecli
-        uses: updatecli/updatecli-action@v3.8.0
+        uses: updatecli/updatecli-action@v3.9.0
 
       - name: Bump ${{ matrix.config }}
         env:
