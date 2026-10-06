@@ -75,6 +75,7 @@ the raw image with your own keys, which is the only option under Trusted Boot.
 | `gpg` | `ghcr.io/kairos-io/hadron-layers/gpg` | GnuPG and its runtime libraries |
 | `fwupd` | `ghcr.io/kairos-io/hadron-layers/fwupd` | Firmware update daemon |
 | `drbd` | `ghcr.io/kairos-io/hadron-layers/drbd` | Out-of-tree DRBD 9 kernel module and drbd-utils |
+| `zfs` | `ghcr.io/kairos-io/hadron-layers/zfs` | OpenZFS kernel module and userspace tools |
 | `tailscale` | `ghcr.io/kairos-io/hadron-layers/tailscale` | Tailscale node agent (tailscaled) and CLI |
 
 ## How it works
@@ -107,11 +108,13 @@ The `tailscale` layer is written in Go and deviates from the pattern above:
 
 ### Kernel-module layers
 
-The `drbd` layer is an **out-of-tree kernel module** and deviates from the pattern above:
+The `drbd` and `zfs` layers are **out-of-tree kernel modules** and deviate from the pattern above:
 
 - The toolchain image ships the kernel `.config`, `Module.symvers` and release strings under `/usr/share/kernel-misc`, but not the kernel source. The build stage fetches the matching kernel source, runs `modules_prepare`, then compiles the module against it.
 - The module is installed into `/usr/lib/modules/$(KERNELRELEASE)/updates/` so `depmod` resolves it ahead of any in-tree module of the same name. The layer ships only the `*.ko`/`*.ko.zst` files under `updates/`; the consumer image is expected to run `depmod` at build/boot to regenerate the `modules.*` indexes.
-- The smoke test runs against `hadron-toolchain` (already pulled during the build; ships `kmod` for `modinfo`) rather than the `hadron` base image, and is purely static: it verifies the module is present under `updates/` and the userspace tools are installed.
+- The `drbd` smoke test runs against `hadron-toolchain` (already pulled during the build; ships `kmod` for `modinfo`) rather than the `hadron` base image, and is purely static: it verifies the module is present under `updates/` and the userspace tools are installed. The `zfs` smoke test runs on the `hadron` base image instead, because its userspace links against `libudev`, which needs `libucontext` from the base image; it checks the module's vermagic against the toolchain kernel the layer was built for, runs `depmod` and `modprobe --dry-run` only when the base image carries that same kernel, and runs `zfs` and `zpool` up to the point where they ask for the module.
+- The `zfs` userspace links against `libtirpc`, which musl does not provide. The layer builds it for linking only and relies on the copy already in the `hadron` base image at runtime.
+- As a system extension only `/usr` of the `zfs` layer is merged, so its `/etc/zfs` is not available there; the module, tools and systemd units under `/usr` are. ZED reads its zedlets from `/etc/zfs/zed.d`, so that directory has to be provided separately.
 - A kernel module is tied to the exact kernel of the toolchain image, so such layers give `HADRON_TOOLCHAIN_VERSION` a **default value**. This lets users `docker build` the layer standalone against a newer toolchain (usually a newer kernel) by overriding it; CI still supplies it centrally from `docker-bake.hcl`. The consumer must run a Hadron release whose kernel matches this toolchain.
 
 ## Toolchain and base versions
@@ -121,7 +124,7 @@ The `drbd` layer is an **out-of-tree kernel module** and deviates from the patte
 ## Automation
 
 - **Build & publish** – `.github/workflows/build.yml` runs on every push to `main` via `docker buildx bake`, building multi-arch images (`linux/amd64`, `linux/arm64`) and pushing to GHCR.
-- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, tailscale). Renovate handles action pins and other dependencies.
+- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, zfs, tailscale). Renovate handles action pins and other dependencies.
 - **Auto-approve** – `.github/workflows/autoapprove.yml` automatically approves and enables squash-merge on PRs opened by the updatecli bots (`github-actions[bot]`, `ci-robbot`) and Renovate (`renovate[bot]`).
 - **Releases page** – `.github/workflows/pages.yml` regenerates [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json) from the GHCR package versions API and deploys `site/index.html` to GitHub Pages after every successful main/tag build.
 

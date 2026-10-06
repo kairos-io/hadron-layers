@@ -23,6 +23,7 @@ jobs:
           - gpg
           - fwupd
           - drbd
+          - zfs
           - tailscale
     steps:
       - name: Install Updatecli
@@ -56,7 +57,7 @@ jobs:
           git checkout main
           git reset --hard upstream/main
 
-          # All five matrix legs share this one fork, so they push the same ref
+          # All matrix legs share this one fork, so they push the same ref
           # at the same time and the losers are rejected with
           # "cannot lock ref 'refs/heads/main'". They all want main at the same
           # commit, so a rejection only matters if the ref is not there

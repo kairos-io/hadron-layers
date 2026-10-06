@@ -1,0 +1,29 @@
+---
+name: zfs layer version updates
+
+sources:
+  zfs:
+    # OpenZFS GA releases only, excluding release candidates (e.g. zfs-2.5.0-rc1).
+    # Each release declares a supported kernel range in META (Linux-Maximum), so
+    # a toolchain kernel bump can need a newer OpenZFS before this one lands.
+    kind: gittag
+    spec:
+      url: https://github.com/openzfs/zfs.git
+      lsremote: true
+      versionfilter:
+        kind: regex/semver
+        regex: '^zfs-(2\.[0-9]+\.[0-9]+)$'
+        pattern: "*"
+    transformers:
+      - trimprefix: zfs-
+
+targets:
+  zfs_version:
+    name: 'ZFS_VERSION in zfs/Dockerfile updated to {{ source "zfs" }}'
+    kind: dockerfile
+    spec:
+      file: zfs/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: ZFS_VERSION
+    sourceid: zfs
