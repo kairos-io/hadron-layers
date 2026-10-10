@@ -116,13 +116,19 @@ target "tailscale" {
   # Spelled out rather than using common_labels(): that helper hardcodes
   # org.opencontainers.image.base.name to the toolchain image, which this
   # layer is not built from.
+  #
+  # The golang tag below is the only version in this file that is not a
+  # variable, so it is also the only one that can fall behind the Dockerfile it
+  # describes. It must stay equal to the builder FROM in tailscale/Dockerfile.
+  # renovate.json groups both under the golang dependency so one pull request
+  # moves them together, and build_test.sh fails the build if they ever differ.
   labels = {
     "org.opencontainers.image.title"       = "tailscale"
     "org.opencontainers.image.description" = "Tailscale node agent (tailscaled) and CLI"
     "org.opencontainers.image.source"      = REPO_URL
     "org.opencontainers.image.url"         = REPO_URL
     "org.opencontainers.image.vendor"      = "Kairos"
-    "org.opencontainers.image.base.name"   = "docker.io/library/golang:1.27.1-alpine"
+    "org.opencontainers.image.base.name"   = "docker.io/library/golang:1.27.2-alpine"
   }
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/tailscale:${TAG}"]

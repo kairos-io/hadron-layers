@@ -34,6 +34,40 @@ done
 
 echo 'build workflow sysext exclusions pass'
 
+# tailscale is the one layer whose builder image is not a bake variable:
+# docker-bake.hcl spells the golang tag out in
+# org.opencontainers.image.base.name, because the layer does not build from the
+# toolchain and so cannot use common_labels(). Renovate's dockerfile manager
+# bumps the FROM, and until kairos-io/kairos#5407 nothing looked inside the bake
+# file, so the label described a Go version the binary had not been built with.
+# Nothing goes red on its own: the layer builds, the label is never asserted,
+# and the drift shows up only in the published image config.
+builder_tag=$(sed -n 's|^FROM golang:\([^ @]*\).*|\1|p' \
+  "$repository/tailscale/Dockerfile" | head -1)
+
+labelled_tag=$(awk '
+  /^target "tailscale"/ { armed = 1; next }
+  armed && /^}/ { exit }
+  armed && /"org\.opencontainers\.image\.base\.name"/ {
+    if (match($0, /golang:[^"@]+/)) {
+      print substr($0, RSTART + 7, RLENGTH - 7)
+      exit
+    }
+  }
+' "$repository/docker-bake.hcl")
+
+if [[ -z "$builder_tag" || -z "$labelled_tag" ]]; then
+  echo "could not read the tailscale builder tag from tailscale/Dockerfile (got '$builder_tag') or the golang tag of its org.opencontainers.image.base.name label in docker-bake.hcl (got '$labelled_tag'). One of the two was reshaped; teach this check the new shape." >&2
+  exit 1
+fi
+
+if [[ "$builder_tag" != "$labelled_tag" ]]; then
+  echo "tailscale/Dockerfile builds on golang:$builder_tag but docker-bake.hcl labels the layer org.opencontainers.image.base.name=docker.io/library/golang:$labelled_tag. Move both, or the published image names a base it was not built on. See kairos-io/kairos#5407." >&2
+  exit 1
+fi
+
+echo 'tailscale base.name label matches its builder image'
+
 # A regex/semver version filter reads the version out of the regex's first
 # capture group, so a regex without one matches every tag and keeps none.
 # updatecli then fails the source with "versions list empty" and never names

@@ -14,6 +14,17 @@
         "pin"
       ],
       "automerge": true
+    },
+    {
+      "description": "Keep the golang tag in tailscale/Dockerfile and the org.opencontainers.image.base.name label in docker-bake.hcl in one pull request. They describe the same image and build_test.sh fails when they disagree.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "golang",
+        "docker.io/library/golang"
+      ],
+      "groupName": "golang"
     }
   ],
   "customManagers": [
@@ -28,6 +39,18 @@
       ],
       "datasourceTemplate": "docker",
       "depNameTemplate": "ghcr.io/kairos-io/hadron"
+    },
+    {
+      "description": "Track the golang tag the tailscale layer is labelled with. The Dockerfile FROM is bumped by the built-in dockerfile manager; nothing else looks inside docker-bake.hcl, so without this the label falls behind on every Go patch release (kairos-io/kairos#5407).",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^docker-bake\\.hcl$/"
+      ],
+      "matchStrings": [
+        "\"org\\.opencontainers\\.image\\.base\\.name\"\\s*=\\s*\"docker\\.io/library/golang:(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "golang"
     }
   ]
 }
