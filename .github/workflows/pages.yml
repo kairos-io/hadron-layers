@@ -25,12 +25,24 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    ## Only rebuild the page after a successful build that came from a push
-    ## (either main or a tag). Skip PR-triggered upstream runs.
+    ## Rebuild the page after any successful build that published something.
+    ## A pull_request run of the build is the only one that does not: it builds
+    ## with `push: false` and `type=cacheonly`, so there is nothing new in GHCR
+    ## for releases.json to name. Every other trigger pushes.
+    ##
+    ## This used to require `event == 'push'`, which named one of them. The
+    ## build also carries workflow_dispatch, and the daily schedule added for
+    ## kairos-io/kairos#5406 is what publishes a bot-merged bump at all, since
+    ## an auto-merge queued with GITHUB_TOKEN starts no push run. Both arrive
+    ## here as a `workflow_run` whose `.event` is the trigger of the completed
+    ## run, so both were skipped and the catalog went on naming the versions of
+    ## the last human push (kairos-io/kairos#5447). Excluding pull_request
+    ## rather than listing the publishing triggers keeps a trigger added to
+    ## build.yml later from stranding the page again.
     if: >-
       github.event_name != 'workflow_run' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push')
+       github.event.workflow_run.event != 'pull_request')
     steps:
       - name: Checkout
         uses: actions/checkout@v7
