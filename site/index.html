@@ -51,6 +51,14 @@
     min-width: 220px;
     flex: 1;
   }
+  .support-select {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: .95rem;
+  }
   .meta { color: var(--muted); font-size: .85rem; margin-bottom: 16px; }
   .meta .pill {
     display: inline-block;
@@ -106,6 +114,8 @@
     color: var(--muted);
   }
   .badge.latest { color: var(--accent); border-color: var(--accent); }
+  .badge.support-official { color: var(--accent-2); border-color: var(--accent-2); }
+  .badge.support-community { color: var(--text); }
   .card-body { padding: 0 18px 16px; }
   .pull-cmd {
     display: flex;
@@ -330,6 +340,11 @@ extensions:
   </details>
   <div class="controls">
     <input type="search" id="filter" placeholder="Filter layers…" aria-label="Filter layers" />
+    <select id="support" class="support-select" aria-label="Filter by who maintains the layer">
+      <option value="">Official and community</option>
+      <option value="official">Official only</option>
+      <option value="community">Community only</option>
+    </select>
   </div>
   <div class="meta" id="meta"></div>
   <div id="layers-wrap" class="layers"></div>
@@ -461,6 +476,16 @@ extensions:
 
     var badges = document.createElement("div");
     badges.className = "card-badges";
+    // Who keeps the recipe working. An index generated before the label
+    // existed carries no support field, and every layer in it was official.
+    var support = layer.support || "official";
+    var supportBadge = document.createElement("span");
+    supportBadge.className = "badge support-" + (support === "community" ? "community" : "official");
+    supportBadge.textContent = support;
+    supportBadge.title = support === "community"
+      ? "Community-contributed recipe, maintained on a best-effort basis"
+      : "Maintained by the Kairos maintainers and bumped automatically";
+    badges.appendChild(supportBadge);
     if (layer.latest) {
       var latestBadge = document.createElement("span");
       latestBadge.className = "badge latest";
@@ -700,10 +725,12 @@ extensions:
 
   function render() {
     var filter = el("filter").value.trim().toLowerCase();
+    var support = el("support").value;
     var hash = parseHash();
     var layers = (DATA.layers || []).filter(function (l) {
+      if (support && (l.support || "official") !== support) return false;
       if (!filter) return true;
-      var hay = (l.name + " " + (l.title || "") + " " + (l.description || "")).toLowerCase();
+      var hay = (l.name + " " + (l.title || "") + " " + (l.description || "") + " " + (l.support || "official")).toLowerCase();
       return hay.indexOf(filter) !== -1;
     });
 
@@ -766,6 +793,7 @@ extensions:
       return;
     }
     el("filter").addEventListener("input", render);
+    el("support").addEventListener("change", render);
     window.addEventListener("hashchange", render);
     var footer = el("footer");
     if (data.generated) footer.textContent = "Data generated " + data.generated;
