@@ -1,10 +1,17 @@
-name: Auto-approve and merge bot PRs
+name: Auto-approve bot PRs
 
-## Approves and auto-merges (squash) PRs opened by the automation bots that
-## run against this repo: updatecli (ci-robbot, opening PRs from the
-## ci-forks/hadron-layers fork) and Renovate (renovate[bot], same-repo branch).
-## All actors are treated identically — approve, then flip the PR to auto-merge
-## so it lands once required checks pass.
+## Approves PRs opened by the automation bots that run against this repo:
+## updatecli (ci-robbot, opening PRs from the ci-forks/hadron-layers fork) and
+## Renovate (renovate[bot], same-repo branch). All actors are treated
+## identically.
+##
+## Approving is all this does. The merge lives in automerge.yml, which waits
+## for "Build and push layer images" to finish green on the PR's head commit.
+## It used to be a `gh pr merge --auto --squash` right here, and because this
+## runs seconds after the PR opens, before any check has reported, and the
+## ruleset on main requires a review but no status check, gh found the PR in a
+## CLEAN merge state and merged it on the spot. #91 put a ZFS_VERSION that
+## OpenZFS never released on main that way. Do not merge from this workflow.
 ##
 ## Uses pull_request_target so the workflow gets a write-scoped token even when
 ## the PR head is a fork (the case for updatecli via ci-forks). Safe because we
@@ -18,7 +25,6 @@ on:
       - reopened
 
 permissions:
-  contents: write
   pull-requests: write
 
 jobs:
@@ -38,41 +44,3 @@ jobs:
         uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Enable auto-merge using GITHUB_TOKEN. The --auto flag only queues the
-      # merge on GitHub's side; the actual squash-merge is performed by
-      # GitHub's backend once all required checks pass. That backend push is
-      # a normal push event and does trigger the "Build and push layer images"
-      # workflow, unlike a direct merge via the API with GITHUB_TOKEN.
-      # PAT_TOKEN (ci-robbot) cannot be used here because ci-robbot is only a
-      # collaborator on the fork and lacks MergePullRequest permission on the
-      # target repository.
-      #
-      # Queueing auto-merge needs "Allow auto-merge" turned on in the repo
-      # settings, which only an admin can do. When it is off, `gh pr merge
-      # --auto` exits non-zero with "Auto merge is not allowed for this
-      # repository", which used to fail this job and leave a red check on
-      # every bot PR even though the approve above had succeeded. Treat only
-      # that one cause as a skip and keep failing on everything else (missing
-      # permissions, a conflicted PR, a closed PR), so a genuine problem is
-      # still visible.
-      #
-      # The repo's allow_auto_merge field is not readable by GITHUB_TOKEN
-      # (the REST API only returns it to admins), so this checks the error
-      # rather than the setting.
-      - name: Enable auto-merge
-        run: |
-          set -o pipefail
-          if out=$(gh pr merge --auto --squash "${PR_URL}" 2>&1); then
-            printf '%s\n' "$out"
-            exit 0
-          fi
-          printf '%s\n' "$out"
-          if printf '%s' "$out" | grep -qF 'Auto merge is not allowed for this repository'; then
-            echo "::notice title=Auto-merge not enabled::PR approved, but auto-merge could not be queued because \"Allow auto-merge\" is disabled on this repository. A maintainer has to merge this PR, or enable the setting in Settings > General > Pull Requests."
-            exit 0
-          fi
-          exit 1
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
