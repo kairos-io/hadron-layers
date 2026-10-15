@@ -3,13 +3,18 @@ name: zfs layer version updates
 
 sources:
   zfs:
-    # OpenZFS GA releases only, excluding release candidates (e.g. zfs-2.5.0-rc1).
+    # The Dockerfile downloads a release tarball and its .sha256.asc, so the
+    # version has to name a published release, not a tag. OpenZFS tags its
+    # development branch zfs-<major>.<minor>.99 and never releases it, which a
+    # gittag source cannot tell apart from a GA tag: it picked zfs-2.4.99 up on
+    # 2026-10-14 and every zfs layer build 404ed on the tarball.
     # Each release declares a supported kernel range in META (Linux-Maximum), so
     # a toolchain kernel bump can need a newer OpenZFS before this one lands.
-    kind: gittag
+    kind: githubrelease
     spec:
-      url: https://github.com/openzfs/zfs.git
-      lsremote: true
+      owner: openzfs
+      repository: zfs
+      # GA releases only, excluding release candidates (e.g. zfs-2.5.0-rc1).
       versionfilter:
         kind: regex/semver
         regex: '^zfs-(2\.[0-9]+\.[0-9]+)$'
