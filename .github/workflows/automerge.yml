@@ -1,0 +1,132 @@
+name: Merge bot PRs once the build is green
+
+## Squash-merges a pull request opened by one of this repository's automation
+## bots, but only after "Build and push layer images" has finished green on
+## that pull request's head commit.
+##
+## The merge used to live in autoapprove.yml as `gh pr merge --auto --squash`,
+## run seconds after the pull request opened. That raced the build, and the
+## race decided the outcome, because the ruleset on main requires an approving
+## review and no status check:
+##
+##   * When no check had reported yet, the freshly approved pull request was
+##     already in a CLEAN merge state, so gh merged it on the spot instead of
+##     queueing anything. #91 landed ZFS_VERSION=2.4.99 that way at
+##     2026-10-14T00:01:18Z, 18 seconds after it was approved. Both of its
+##     `Build zfs` jobs 404ed a minute later, and main carried a download that
+##     cannot succeed until #95.
+##   * When a check had already reported, gh fell back to
+##     enablePullRequestAutoMerge, which errors with "Auto merge is not allowed
+##     for this repository" while "Allow auto-merge" is off in Settings. Every
+##     pull request that took that branch is still open and approved.
+##
+## Waiting for the run removes both halves: nothing reaches main before the
+## build reports on it, and an approved bot pull request still lands without a
+## human and without the repository setting.
+##
+## Like the merge it replaces, this completes as github-actions[bot] on
+## GITHUB_TOKEN, and GitHub starts no workflow run for a GITHUB_TOKEN event, so
+## it publishes nothing by itself. That is what the schedule in build.yml is
+## for (kairos-io/kairos#5406).
+##
+## workflow_run is resolved from the default branch, so a change to this file
+## cannot be exercised by the pull request that makes it.
+
+on:
+  workflow_run:
+    workflows:
+      - Build and push layer images
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    name: Merge green bot PR
+    ## Only a green pull request build. A cancelled run (build.yml cancels a
+    ## superseded pull request run) and a failed run both stop here.
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge the pull request behind this run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          ## Keep identical to the author allow-list in autoapprove.yml;
+          ## build_test.sh fails when the two drift. Approving a bot's pull
+          ## request without merging it, or merging one without approving it,
+          ## is never what a change to one list alone means.
+          MERGE_BOTS: 'github-actions[bot] ci-robbot renovate[bot]'
+        run: |
+          set -euo pipefail
+
+          ## github.event.workflow_run.pull_requests is empty when the head is
+          ## a fork, which is every pull request the autobumper opens (it
+          ## pushes to ci-forks/hadron-layers), and /commits/<sha>/pulls does
+          ## not see a fork head from here either. Both were checked against
+          ## run 38645363194. Match on the head commit of the open pull
+          ## requests instead.
+          number=$(gh api "/repos/${REPO}/pulls?state=open&per_page=100" \
+            --jq "[.[] | select(.head.sha == \"${HEAD_SHA}\")] | .[0].number // empty")
+
+          if [[ -z "$number" ]]; then
+            echo "no open pull request has ${HEAD_SHA} as its head; it was pushed over or already merged"
+            exit 0
+          fi
+
+          ## The raw login, so the allow-list reads the same strings
+          ## autoapprove.yml compares against. gh's own author field renders a
+          ## bot as app/<name>.
+          author=$(gh api "/repos/${REPO}/pulls/${number}" --jq '.user.login')
+
+          read -ra bots <<< "$MERGE_BOTS"
+          allowed=
+          for bot in "${bots[@]}"; do
+            [[ "$author" == "$bot" ]] && allowed=yes
+          done
+
+          if [[ -z "$allowed" ]]; then
+            echo "#${number} is from ${author}, which is not one of: ${MERGE_BOTS}"
+            exit 0
+          fi
+
+          state=$(gh pr view "$number" --repo "$REPO" \
+            --json reviewDecision,mergeable --jq '"\(.reviewDecision) \(.mergeable)"')
+          decision=${state% *}
+          mergeable=${state#* }
+
+          if [[ "$decision" != APPROVED ]]; then
+            echo "#${number} is ${decision}, not APPROVED"
+            exit 0
+          fi
+
+          ## UNKNOWN is GitHub still computing the merge; let the merge call
+          ## decide rather than skipping a pull request that is fine.
+          if [[ "$mergeable" == CONFLICTING ]]; then
+            echo "#${number} conflicts with the base branch"
+            exit 0
+          fi
+
+          ## GITHUB_TOKEN may not push a workflow file, so a merge of one is
+          ## refused with "refusing to allow a GitHub App to create or update
+          ## workflow ... without `workflows` permission", and no permissions:
+          ## key grants it. Decide from the file list rather than from that
+          ## message: a grep on the message would swallow a genuine permission
+          ## problem along with this one.
+          ##
+          ## Only the YAML is a workflow. build_test.sh sits in the same
+          ## directory and is an ordinary file, so a pull request that touches
+          ## only it still merges here.
+          if gh pr diff "$number" --repo "$REPO" --name-only |
+            grep -qE '^\.github/workflows/.*\.ya?ml$'; then
+            echo "::notice title=Workflow change needs a human::#${number} changes a workflow file, which GITHUB_TOKEN cannot push. A maintainer has to merge it."
+            exit 0
+          fi
+
+          gh pr merge "$number" --repo "$REPO" --squash
