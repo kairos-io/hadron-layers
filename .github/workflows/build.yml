@@ -9,10 +9,25 @@ on:
   pull_request:
     branches:
       - main
+  # Build main on a schedule as well as on push. Most pull requests here are
+  # merged by autoapprove.yml through GitHub's auto-merge, which completes as
+  # github-actions[bot] on the GITHUB_TOKEN, and GitHub starts no workflow run
+  # for a GITHUB_TOKEN event. Those merges therefore reach main without ever
+  # reaching the push trigger above, so every bumped layer stayed unpublished
+  # until somebody merged a pull request by hand (kairos-io/kairos#5406).
+  #
+  # 04:00 UTC is after the autobumper's 00:00 run and the auto-merges that
+  # follow it. A run with nothing new to do is close to free: every layer is
+  # built on every run already and the per-layer GHA cache short-circuits a
+  # layer whose inputs have not changed, which reproduces the same digest and
+  # rewrites the tag to the same manifest.
+  schedule:
+    - cron: '0 4 * * *'
   workflow_dispatch:
 
 # Serialize runs per ref so only one main build runs at a time.
-# Pushes to main queue and run in order (cancel-in-progress: false) to avoid
+# Pushes and scheduled runs on main queue and run in order
+# (cancel-in-progress: false) to avoid
 # cache races and older images overwriting newer ones. Pull request runs cancel
 # their own superseded runs to save resources.
 concurrency:
