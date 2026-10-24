@@ -10,7 +10,7 @@ RUN mkdir -p /output
 WORKDIR /sources
 
 # fwupd
-ARG FWUPD_VERSION=2.1.8
+ARG FWUPD_VERSION=2.1.9
 RUN curl -L https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fwupd-${FWUPD_VERSION}.tar.xz -o fwupd.tar.xz
 
 # glib. GNOME sources are grouped by major.minor series under
