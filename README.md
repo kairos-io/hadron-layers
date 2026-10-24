@@ -69,14 +69,29 @@ the raw image with your own keys, which is the only option under Trusted Boot.
 
 ## Available layers
 
-| Layer | Image | Description |
-|-------|-------|-------------|
-| `git` | `ghcr.io/kairos-io/hadron-layers/git` | Git version control system |
-| `gpg` | `ghcr.io/kairos-io/hadron-layers/gpg` | GnuPG and its runtime libraries |
-| `fwupd` | `ghcr.io/kairos-io/hadron-layers/fwupd` | Firmware update daemon |
-| `drbd` | `ghcr.io/kairos-io/hadron-layers/drbd` | Out-of-tree DRBD 9 kernel module and drbd-utils |
-| `zfs` | `ghcr.io/kairos-io/hadron-layers/zfs` | OpenZFS kernel module and userspace tools |
-| `tailscale` | `ghcr.io/kairos-io/hadron-layers/tailscale` | Tailscale node agent (tailscaled) and CLI |
+| Layer | Image | Support | Description |
+|-------|-------|---------|-------------|
+| `git` | `ghcr.io/kairos-io/hadron-layers/git` | official | Git version control system |
+| `gpg` | `ghcr.io/kairos-io/hadron-layers/gpg` | official | GnuPG and its runtime libraries |
+| `fwupd` | `ghcr.io/kairos-io/hadron-layers/fwupd` | official | Firmware update daemon |
+| `drbd` | `ghcr.io/kairos-io/hadron-layers/drbd` | official | Out-of-tree DRBD 9 kernel module and drbd-utils |
+| `zfs` | `ghcr.io/kairos-io/hadron-layers/zfs` | official | OpenZFS kernel module and userspace tools |
+| `tailscale` | `ghcr.io/kairos-io/hadron-layers/tailscale` | official | Tailscale node agent (tailscaled) and CLI |
+
+Every layer declares who keeps its recipe working, as the OCI label
+`io.kairos.hadron.layer.support` on the published image and as the `support`
+field of each entry in [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json):
+
+- **official** – maintained by the Kairos maintainers. The layer has an
+  `updatecli.d/<name>.yaml` manifest and a row in the autobumper matrix, so an
+  upstream release reaches it within a day and a bump that breaks the build is
+  caught here. CI refuses a layer that claims `official` without both.
+- **community** – a contributed recipe, carried on a best-effort basis. It may
+  go stale between upstream releases.
+
+Both are built, tested and published by the same pipeline, so the image is as
+trustworthy either way. The label is about who maintains the recipe, which is
+why `org.opencontainers.image.vendor` stays `Kairos` for both.
 
 ## How it works
 
@@ -131,7 +146,7 @@ The `drbd` and `zfs` layers are **out-of-tree kernel modules** and deviate from 
 ## Adding a new layer
 
 1. Create a new directory (e.g. `myapp/`) with a `Dockerfile` that follows the build → merge → `FROM scratch AS default` → `ARG HADRON_VERSION` + `FROM ghcr.io/kairos-io/hadron:${HADRON_VERSION} AS test` pattern. The `test` stage must `COPY --from=default / /` and add offline `RUN` steps that exercise the shipped binaries.
-2. Add a target to `docker-bake.hcl` passing `HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION` and `HADRON_VERSION = HADRON_VERSION`, plus OCI labels via `common_labels("myapp", "One-line description")` (the description surfaces on the releases page).
+2. Add a target to `docker-bake.hcl` passing `HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION` and `HADRON_VERSION = HADRON_VERSION`, plus OCI labels via `common_labels("myapp", "One-line description", "official")` (the description surfaces on the releases page). The third argument is the support level above: pass `"community"` for a contributed recipe nobody has signed up to maintain, and skip steps 3 and 4.
 3. Add an updatecli config under `updatecli.d/myapp.yaml` to track upstream releases.
 4. Add `myapp` to the `matrix.config` list in `.github/workflows/autobumper.yml`.
 

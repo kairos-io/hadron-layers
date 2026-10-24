@@ -21,6 +21,7 @@
 ##         "description": "Git version control system",
 ##         "image": "ghcr.io/kairos-io/hadron-layers/git",
 ##         "source": "https://github.com/kairos-io/hadron-layers",
+##         "support": "official",
 ##         "latest": "2.52.0",
 ##         "tags": [
 ##           {"tag": "2.52.0", "digest": "sha256:...", "created": "..."}
@@ -59,6 +60,15 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
   title=$(jq -r --arg t "$target" '.target[$t].labels["org.opencontainers.image.title"] // $t' <<<"$bake")
   description=$(jq -r --arg t "$target" '.target[$t].labels["org.opencontainers.image.description"] // ""' <<<"$bake")
   source_url=$(jq -r --arg t "$target" '.target[$t].labels["org.opencontainers.image.source"] // ""' <<<"$bake")
+
+  ## Provenance: official layers are maintained by the Kairos maintainers and
+  ## bumped by the autobumper, community layers are contributed recipes kept on
+  ## a best-effort basis. A layer built before the label existed carries no
+  ## value, and every one of those is official, so that is the fallback.
+  support=$(jq -r --arg t "$target" '
+      (.target[$t].labels["io.kairos.hadron.layer.support"] // "")
+      | if . == "" then "official" else . end
+    ' <<<"$bake")
 
   ## Strip the tag from the first bake tag entry to recover the bare image name.
   first_tag=$(jq -r --arg t "$target" '.target[$t].tags[0] // ""' <<<"$bake")
@@ -133,6 +143,7 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
     --arg description "$description" \
     --arg image "$image" \
     --arg source "$source_url" \
+    --arg support "$support" \
     --arg latest "$latest" \
     --argjson tags "$tags" \
     '. += [{
@@ -141,6 +152,7 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
       description: $description,
       image: $image,
       source: $source,
+      support: $support,
       latest: $latest,
       tags: $tags
     }]' <<<"$layers")
