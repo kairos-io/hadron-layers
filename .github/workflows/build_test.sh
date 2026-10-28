@@ -57,3 +57,24 @@ if [[ -n "$ungrouped" ]]; then
 fi
 
 echo 'updatecli regex/semver capture groups pass'
+
+# A pull request merged by autoapprove.yml lands on main as a GITHUB_TOKEN
+# event, and GitHub starts no workflow run for one. The push trigger in
+# build.yml is therefore reached only when a person merges, so the schedule is
+# the only thing that publishes a bot-merged bump. Nothing goes red when it is
+# dropped: the pull request build still passes and the images stop moving
+# (kairos-io/kairos#5406). Assert it is still there.
+schedule_cron=$(awk '
+  /^on:/ { in_on = 1; next }
+  in_on && /^[^[:space:]]/ { in_on = 0 }
+  in_on && /^  schedule:/ { armed = 1; next }
+  armed && /^    - cron:/ { print; exit }
+  armed && /^  [^[:space:]]/ { exit }
+' "$workflow")
+
+if [[ -z "$schedule_cron" ]]; then
+  echo "build.yml has no schedule: trigger. A bot merge does not start a push run, so without it a merged dependency bump is never built or published. See kairos-io/kairos#5406." >&2
+  exit 1
+fi
+
+echo 'build workflow schedule trigger pass'

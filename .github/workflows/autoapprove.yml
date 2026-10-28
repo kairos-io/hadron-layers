@@ -41,9 +41,17 @@ jobs:
 
       # Enable auto-merge using GITHUB_TOKEN. The --auto flag only queues the
       # merge on GitHub's side; the actual squash-merge is performed by
-      # GitHub's backend once all required checks pass. That backend push is
-      # a normal push event and does trigger the "Build and push layer images"
-      # workflow, unlike a direct merge via the API with GITHUB_TOKEN.
+      # GitHub's backend once all required checks pass.
+      #
+      # That merge does NOT start a workflow run. It completes as
+      # github-actions[bot] on this GITHUB_TOKEN, and GitHub starts no run for
+      # a GITHUB_TOKEN event, whether the merge is queued with --auto or made
+      # directly through the API. Between 2026-09-01 and 2026-10-10, 28 pull
+      # requests merged this way and none of them produced a push run of
+      # "Build and push layer images"; the 7 merged by a person produced 7
+      # (kairos-io/kairos#5406). Do not assume a merge from here publishes
+      # anything: build.yml carries a daily schedule for exactly that reason.
+      #
       # PAT_TOKEN (ci-robbot) cannot be used here because ci-robbot is only a
       # collaborator on the fork and lacks MergePullRequest permission on the
       # target repository.
