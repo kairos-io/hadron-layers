@@ -57,3 +57,68 @@ if [[ -n "$ungrouped" ]]; then
 fi
 
 echo 'updatecli regex/semver capture groups pass'
+
+# A gittag source only promises that the tag exists. A Dockerfile that fetches
+# https://<host>/releases/download/<version>/... needs a published release, and
+# upstreams tag more than they release: OpenZFS tags its development branch
+# zfs-2.4.99 and never releases it, so the nightly bump moved the zfs layer onto
+# a tarball that 404s. The autobumper merges itself, so main went red with no
+# pull request to read. Pair a releases/download ARG with a githubrelease source.
+if ! (
+  cd "$repository" &&
+  awk '
+    FILENAME ~ /Dockerfile$/ {
+      if ($0 !~ /releases\/download\//) next
+      line = $0
+      while (match(line, /\$\{[A-Za-z_][A-Za-z0-9_]*\}/)) {
+        released[FILENAME SUBSEP substr(line, RSTART + 2, RLENGTH - 3)] = 1
+        line = substr(line, RSTART + RLENGTH)
+      }
+      next
+    }
+
+    # The manifests nest "kind:" under a versionfilter as well, so a source kind
+    # is only the one at the entry s own indent.
+    /^sources:[[:space:]]*$/ { section = "sources"; id = ""; next }
+    /^targets:[[:space:]]*$/ { section = "targets"; id = ""; next }
+    /^[^[:space:]#-]/        { section = "";       id = ""; next }
+    section == "" { next }
+
+    /^  [A-Za-z_][A-Za-z0-9_]*:[[:space:]]*$/ {
+      id = $1; sub(/:$/, "", id); next
+    }
+    id == "" { next }
+
+    { value = $2; gsub(/^["'\'']|["'\'']$/, "", value) }
+
+    section == "sources" && /^    kind:[[:space:]]/ { kind[FILENAME SUBSEP id] = value; next }
+
+    section == "targets" && $1 == "file:"     { file[FILENAME SUBSEP id] = value; next }
+    section == "targets" && $1 == "matcher:"  { matcher[FILENAME SUBSEP id] = value; next }
+    section == "targets" && $1 == "sourceid:" { sourceid[FILENAME SUBSEP id] = value; next }
+
+    END {
+      for (target in matcher) {
+        split(target, part, SUBSEP)
+        if (!((file[target] SUBSEP matcher[target]) in released)) continue
+
+        source = sourceid[target]
+        if (source == "") {
+          printf "%s: target %s writes %s, read from a releases/download URL, and names no sourceid\n", part[1], part[2], matcher[target] > "/dev/stderr"
+          bad = 1
+          continue
+        }
+        if (kind[part[1] SUBSEP source] != "githubrelease") {
+          printf "%s: %s is read from a releases/download URL in %s, but its source %s is kind %s, which only promises a tag\n", part[1], matcher[target], file[target], source, (kind[part[1] SUBSEP source] == "" ? "(none)" : kind[part[1] SUBSEP source]) > "/dev/stderr"
+          bad = 1
+        }
+      }
+      exit bad
+    }
+  ' */Dockerfile updatecli.d/*.yaml
+); then
+  echo "use kind: githubrelease for the source above, so a tag that was never released cannot be picked" >&2
+  exit 1
+fi
+
+echo 'updatecli release-asset sources pass'
