@@ -6,7 +6,7 @@ ARG HADRON_VERSION
 
 FROM ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION} AS builder
 
-ARG GIT_VERSION=2.56.0
+ARG GIT_VERSION=2.56.1
 WORKDIR /build
 RUN curl -L https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz -o git.tar.xz && tar -xf git.tar.xz && rm git.tar.xz && mv git-* git-src
 WORKDIR /build/git-src
