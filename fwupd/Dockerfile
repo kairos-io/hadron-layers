@@ -25,7 +25,7 @@ RUN GLIB_SERIES="${GLIB_VERSION%.*}" && \
 ARG PCRE2_VERSION=10.49
 RUN curl -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz -o pcre2.tar.gz
 
-ARG LIBXMLB_VERSION=0.3.29
+ARG LIBXMLB_VERSION=0.3.30
 RUN curl -L https://github.com/hughsie/libxmlb/releases/download/${LIBXMLB_VERSION}/libxmlb-${LIBXMLB_VERSION}.tar.xz -o libxmlb.tar.xz
 
 ARG LIBUSB_VERSION=1.0.30
