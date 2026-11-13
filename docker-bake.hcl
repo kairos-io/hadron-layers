@@ -141,7 +141,7 @@ target "tailscale" {
     "org.opencontainers.image.source"      = REPO_URL
     "org.opencontainers.image.url"         = REPO_URL
     "org.opencontainers.image.vendor"      = "Kairos"
-    "org.opencontainers.image.base.name"   = "docker.io/library/golang:1.27.2-alpine"
+    "org.opencontainers.image.base.name"   = "docker.io/library/golang:1.27.4-alpine"
   }
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/tailscale:${TAG}"]
