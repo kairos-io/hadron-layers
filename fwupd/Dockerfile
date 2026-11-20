@@ -11,7 +11,7 @@ WORKDIR /sources
 
 # fwupd
 ARG FWUPD_VERSION=2.1.9
-RUN curl -L https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fwupd-${FWUPD_VERSION}.tar.xz -o fwupd.tar.xz
+RUN curl -fL https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fwupd-${FWUPD_VERSION}.tar.xz -o fwupd.tar.xz
 
 # glib. GNOME sources are grouped by major.minor series under
 # /sources/glib/<major>.<minor>/, and only even minor versions are stable
@@ -20,44 +20,49 @@ RUN curl -L https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fw
 # so future bumps do not have to touch the URL.
 ARG GLIB_VERSION=2.90.1
 RUN GLIB_SERIES="${GLIB_VERSION%.*}" && \
-    curl -L "https://download.gnome.org/sources/glib/${GLIB_SERIES}/glib-${GLIB_VERSION}.tar.xz" -o glib.tar.xz
+    curl -fL "https://download.gnome.org/sources/glib/${GLIB_SERIES}/glib-${GLIB_VERSION}.tar.xz" -o glib.tar.xz
 
 ARG PCRE2_VERSION=10.49
-RUN curl -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz -o pcre2.tar.gz
+RUN curl -fL https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz -o pcre2.tar.gz
 
 ARG LIBXMLB_VERSION=0.3.30
-RUN curl -L https://github.com/hughsie/libxmlb/releases/download/${LIBXMLB_VERSION}/libxmlb-${LIBXMLB_VERSION}.tar.xz -o libxmlb.tar.xz
+RUN curl -fL https://github.com/hughsie/libxmlb/releases/download/${LIBXMLB_VERSION}/libxmlb-${LIBXMLB_VERSION}.tar.xz -o libxmlb.tar.xz
 
 ARG LIBUSB_VERSION=1.0.30
-RUN curl -L https://github.com/libusb/libusb/releases/download/v${LIBUSB_VERSION}/libusb-${LIBUSB_VERSION}.tar.bz2 -o libusb.tar.bz2
+RUN curl -fL https://github.com/libusb/libusb/releases/download/v${LIBUSB_VERSION}/libusb-${LIBUSB_VERSION}.tar.bz2 -o libusb.tar.bz2
 
 ARG LIBJCAT_VERSION=0.2.6
-RUN curl -L https://github.com/hughsie/libjcat/releases/download/${LIBJCAT_VERSION}/libjcat-${LIBJCAT_VERSION}.tar.xz -o libjcat.tar.xz
+RUN curl -fL https://github.com/hughsie/libjcat/releases/download/${LIBJCAT_VERSION}/libjcat-${LIBJCAT_VERSION}.tar.xz -o libjcat.tar.xz
 
+# json-glib comes from download.gnome.org like glib, with the same
+# major.minor series directory. The gitlab.gnome.org archive URL it used
+# before answers the CI runners with an error page, which curl saved as the
+# tarball and tar then rejected with "short read".
 ARG JSON_GLIB_VERSION=1.10.8
-RUN curl -L https://gitlab.gnome.org/GNOME/json-glib/-/archive/${JSON_GLIB_VERSION}/json-glib-${JSON_GLIB_VERSION}.tar.gz -o json-glib.tar.gz
+RUN JSON_GLIB_SERIES="${JSON_GLIB_VERSION%.*}" && \
+    curl -fL "https://download.gnome.org/sources/json-glib/${JSON_GLIB_SERIES}/json-glib-${JSON_GLIB_VERSION}.tar.xz" -o json-glib.tar.xz
 
 ARG GETTEXT_VERSION=1.0
-RUN curl -L https://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext.tar.gz
+RUN curl -fL https://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext.tar.gz
 
 ARG SQLITE3_VERSION=3.54.1
-RUN curl -L https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
+RUN curl -fL https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
 
 ARG LIBFFI_VERSION=3.8.0
-RUN curl -L https://github.com/libffi/libffi/releases/download/v${LIBFFI_VERSION}/libffi-${LIBFFI_VERSION}.tar.gz -o libffi.tar.gz
+RUN curl -fL https://github.com/libffi/libffi/releases/download/v${LIBFFI_VERSION}/libffi-${LIBFFI_VERSION}.tar.gz -o libffi.tar.gz
 
 # libucontext provides POSIX ucontext functions absent from musl libc.
 # libsystemd.so and libudev.so.1 in the hadron toolchain were compiled
 # against it, so it must be present at link time and at runtime.
 ARG LIBUCONTEXT_VERSION=1.5.2
-RUN curl -L https://github.com/kaniini/libucontext/archive/refs/tags/libucontext-${LIBUCONTEXT_VERSION}.tar.gz -o libucontext.tar.gz
+RUN curl -fL https://github.com/kaniini/libucontext/archive/refs/tags/libucontext-${LIBUCONTEXT_VERSION}.tar.gz -o libucontext.tar.gz
 
 
 RUN tar -xf pcre2.tar.gz && mv pcre2-* pcre2
 RUN tar -xf glib.tar.xz && mv glib-* glib
 RUN tar -xf libxmlb.tar.xz && mv libxmlb-* libxmlb
 RUN tar -xf libusb.tar.bz2 && mv libusb-* libusb
-RUN tar -xf json-glib.tar.gz && mv json-glib-* json-glib
+RUN tar -xf json-glib.tar.xz && mv json-glib-* json-glib
 RUN tar -xf libjcat.tar.xz && mv libjcat-* libjcat
 RUN tar -xf gettext.tar.gz && mv gettext-* gettext
 RUN tar -xf fwupd.tar.xz && mv fwupd-* fwupd
