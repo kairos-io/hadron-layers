@@ -22,7 +22,7 @@ ARG HADRON_TOOLCHAIN_VERSION=v0.6.4
 # module can be compiled against it (the same approach Hadron uses for its own
 # out-of-tree module examples).
 FROM ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION} AS module-builder
-ARG DRBD_VERSION=9.3.4
+ARG DRBD_VERSION=9.3.5
 ARG TARGETARCH
 WORKDIR /build
 
@@ -76,7 +76,7 @@ RUN kver=$(cat /usr/share/kernel-misc/kernel-release) && \
 # drbdadm / drbdsetup / drbdmeta for managing the DRBD 9 module. The LINBIT
 # release tarball ships a pre-generated ./configure.
 FROM ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION} AS utils-builder
-ARG DRBD_UTILS_VERSION=9.35.0
+ARG DRBD_UTILS_VERSION=9.36.0
 WORKDIR /build
 RUN curl -fL "https://pkg.linbit.com/downloads/drbd/utils/drbd-utils-${DRBD_UTILS_VERSION}.tar.gz" -o drbd-utils.tar.gz
 RUN tar -xf drbd-utils.tar.gz && rm drbd-utils.tar.gz && mv drbd-utils-* drbd-utils
