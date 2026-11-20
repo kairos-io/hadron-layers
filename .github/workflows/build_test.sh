@@ -198,18 +198,18 @@ fi
 
 echo 'updatecli release-asset sources pass'
 
-# The runner file must name only layers that exist, and every runner it hands
-# out must be set for both arches.
-repository=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-ruby -ryaml -e '
-  cfg = YAML.safe_load_file("'"$repository"'/.github/runners.yaml")
-  layers = Dir.glob("'"$repository"'/*/Dockerfile").map { |f| File.basename(File.dirname(f)) }
-  unknown = cfg.fetch("heavy_layers") - layers
-  abort "runners.yaml heavy_layers has no such layer: #{unknown.join(", ")}" unless unknown.empty?
-  %w[light heavy].each do |kind|
-    %w[amd64 arm64].each do |arch|
-      abort "runners.yaml #{kind}.#{arch} is not set" if cfg.fetch(kind)[arch].to_s.empty?
-    end
-  end
-'
-echo 'runners.yaml pass'
+# One job gates the whole workflow, so the ruleset can require a single check
+# that does not change when a layer or an arch is added.
+workflow_file=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/build.yml
+awk '
+  /^  layers-ci:/ { in_job = 1; next }
+  in_job && /^  [a-z]/ { in_job = 0 }
+  in_job && /name: layers-ci/ { named = 1 }
+  in_job && /if: always\(\)/ { always = 1 }
+  in_job && /needs: \[discover, build, merge\]/ { needs = 1 }
+  END { exit !(named && always && needs) }
+' "$workflow_file" || {
+  echo "build.yml needs a layers-ci job named layers-ci that runs if: always() and needs discover, build and merge" >&2
+  exit 1
+}
+echo 'layers-ci gate job present'
