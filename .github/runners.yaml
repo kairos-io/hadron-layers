@@ -1,0 +1,18 @@
+# Which runner builds each layer, read by the discover job in build.yml.
+#
+# Most layers build in a few minutes and do not need a big machine, so they
+# run on the GitHub-hosted runners, which are free for a public repository and
+# leave the shared self-hosted VMs to the projects that need them. The layers
+# that compile a lot (fwupd, gpg, zfs) stay on a self-hosted VM, and on a
+# smaller one than before where a smaller one exists. Add a layer to
+# heavy_layers when its build is long enough to justify it.
+light:
+  amd64: ubuntu-latest
+  arm64: ubuntu-24.04-arm
+heavy:
+  amd64: oracle-vm-16cpu-64gb-x86-64
+  arm64: oracle-vm-32cpu-128gb-arm64
+heavy_layers:
+  - fwupd
+  - gpg
+  - zfs

@@ -13,7 +13,19 @@ variable "HADRON_TOOLCHAIN_VERSION" {
 # test stage. Renovate tracks this variable via the custom manager in
 # renovate.json and opens PRs when a newer semver tag is published to GHCR.
 variable "HADRON_VERSION" {
-  default = "v0.6.4"
+  default = "v0.6.6"
+}
+
+# ZFS_HADRON_VERSION pins the zfs layer to the Hadron release whose kernel it
+# is built against, apart from HADRON_VERSION. OpenZFS 2.4.4, the newest
+# release, supports kernels up to 7.2 (META: Linux-Maximum 7.2); Hadron v0.6.2
+# and later ship kernel 7.3.x, which no OpenZFS release supports yet. v0.6.1
+# (kernel 7.2.11) is the newest Hadron release 2.4.4 can be built against.
+# Renovate and updatecli track HADRON_VERSION and HADRON_TOOLCHAIN_VERSION by
+# exact name and leave this one alone. Move it when OpenZFS releases a version
+# that supports the kernel of a newer Hadron.
+variable "ZFS_HADRON_VERSION" {
+  default = "v0.6.1"
 }
 
 variable "REGISTRY" {
@@ -50,7 +62,7 @@ function "common_labels" {
 }
 
 group "default" {
-  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale"]
+  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop", "containerd-shim-wasmtime", "containerd-shim-spin"]
 }
 
 target "git" {
@@ -109,12 +121,28 @@ target "zfs" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
+    HADRON_TOOLCHAIN_VERSION = ZFS_HADRON_VERSION
+    HADRON_VERSION           = ZFS_HADRON_VERSION
+  }
+  labels = merge(
+    common_labels("zfs", "OpenZFS kernel module and userspace tools"),
+    { "org.opencontainers.image.base.name" = "ghcr.io/kairos-io/hadron-toolchain:${ZFS_HADRON_VERSION}" },
+  )
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/zfs:${TAG}"]
+}
+
+target "htop" {
+  context    = "htop"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("zfs", "OpenZFS kernel module and userspace tools")
+  labels    = common_labels("htop", "Interactive process viewer")
   platforms = PLATFORMS
-  tags      = ["${REGISTRY}/zfs:${TAG}"]
+  tags      = ["${REGISTRY}/htop:${TAG}"]
 }
 
 # Tailscale builds from the upstream golang image rather than the toolchain
@@ -145,4 +173,30 @@ target "tailscale" {
   }
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/tailscale:${TAG}"]
+}
+
+target "containerd-shim-wasmtime" {
+  context    = "containerd-shim-wasmtime"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels    = common_labels("containerd-shim-wasmtime", "containerd shim for WebAssembly workloads on wasmtime (runwasi)")
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/containerd-shim-wasmtime:${TAG}"]
+}
+
+target "containerd-shim-spin" {
+  context    = "containerd-shim-spin"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels    = common_labels("containerd-shim-spin", "containerd shim for Spin WebAssembly applications")
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/containerd-shim-spin:${TAG}"]
 }
