@@ -10,7 +10,7 @@ RUN mkdir -p /output
 WORKDIR /sources
 
 # fwupd
-ARG FWUPD_VERSION=2.1.9
+ARG FWUPD_VERSION=2.1.10
 RUN curl -fL https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/fwupd-${FWUPD_VERSION}.tar.xz -o fwupd.tar.xz
 
 # glib. GNOME sources are grouped by major.minor series under
@@ -48,7 +48,7 @@ RUN curl -fL https://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.
 ARG SQLITE3_VERSION=3.54.1
 RUN curl -fL https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
 
-ARG LIBFFI_VERSION=3.8.0
+ARG LIBFFI_VERSION=3.8.1
 RUN curl -fL https://github.com/libffi/libffi/releases/download/v${LIBFFI_VERSION}/libffi-${LIBFFI_VERSION}.tar.gz -o libffi.tar.gz
 
 # libucontext provides POSIX ucontext functions absent from musl libc.

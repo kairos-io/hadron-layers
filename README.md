@@ -155,7 +155,7 @@ The `drbd` and `zfs` layers are **out-of-tree kernel modules** and deviate from 
 
 - **Build & publish** – `.github/workflows/build.yml` runs on every push to `main` via `docker buildx bake`, building multi-arch images (`linux/amd64`, `linux/arm64`) and pushing to GHCR.
 - **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, zfs, tailscale, htop). Renovate handles action pins and other dependencies.
-- **Auto-approve** – `.github/workflows/autoapprove.yml` automatically approves and enables squash-merge on PRs opened by the updatecli bots (`github-actions[bot]`, `ci-robbot`) and Renovate (`renovate[bot]`).
+- **Bot pull requests** – the pull requests the autobumper opens are reviewed and merged like any other pull request. There is no workflow that approves or merges them.
 - **Releases page** – `.github/workflows/pages.yml` regenerates [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json) from the GHCR package versions API and deploys `site/index.html` to GitHub Pages after every successful main/tag build.
 
 ## Adding a new layer

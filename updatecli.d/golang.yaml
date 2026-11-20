@@ -1,0 +1,36 @@
+---
+name: golang build image of the tailscale layer
+
+sources:
+  golang:
+    # The tailscale layer builds from the upstream golang alpine image rather
+    # than the toolchain. Track the newest x.y.z-alpine tag.
+    kind: dockerimage
+    spec:
+      image: golang
+      tagfilter: '^[0-9]+\.[0-9]+\.[0-9]+-alpine$'
+      versionfilter:
+        kind: regex/semver
+        regex: '^([0-9]+\.[0-9]+\.[0-9]+)-alpine$'
+        pattern: "*"
+
+# The Dockerfile FROM and the org.opencontainers.image.base.name label in
+# docker-bake.hcl describe the same image, and build_test.sh fails when they
+# disagree, so both move in the same pull request.
+targets:
+  tailscale_from:
+    name: 'golang tag in tailscale/Dockerfile updated to {{ source "golang" }}'
+    kind: file
+    spec:
+      file: tailscale/Dockerfile
+      matchpattern: '(?m)^FROM golang:[^ ]+ AS builder$'
+      replacepattern: 'FROM golang:{{ source "golang" }} AS builder'
+    sourceid: golang
+  tailscale_label:
+    name: 'golang tag in the tailscale base.name label updated to {{ source "golang" }}'
+    kind: file
+    spec:
+      file: docker-bake.hcl
+      matchpattern: 'docker\.io/library/golang:[^"]+'
+      replacepattern: 'docker.io/library/golang:{{ source "golang" }}'
+    sourceid: golang
