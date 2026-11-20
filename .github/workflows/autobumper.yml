@@ -25,6 +25,7 @@ jobs:
           - drbd
           - zfs
           - tailscale
+          - htop
     steps:
       - name: Install Updatecli
         uses: updatecli/updatecli-action@v3.10.0

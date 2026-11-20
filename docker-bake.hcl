@@ -50,7 +50,7 @@ function "common_labels" {
 }
 
 group "default" {
-  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale"]
+  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop"]
 }
 
 target "git" {
@@ -115,6 +115,19 @@ target "zfs" {
   labels    = common_labels("zfs", "OpenZFS kernel module and userspace tools")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/zfs:${TAG}"]
+}
+
+target "htop" {
+  context    = "htop"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels    = common_labels("htop", "Interactive process viewer")
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/htop:${TAG}"]
 }
 
 # Tailscale builds from the upstream golang image rather than the toolchain
