@@ -16,6 +16,18 @@ variable "HADRON_VERSION" {
   default = "v0.6.6"
 }
 
+# ZFS_HADRON_VERSION pins the zfs layer to the Hadron release whose kernel it
+# is built against, apart from HADRON_VERSION. OpenZFS 2.4.4, the newest
+# release, supports kernels up to 7.2 (META: Linux-Maximum 7.2); Hadron v0.6.2
+# and later ship kernel 7.3.x, which no OpenZFS release supports yet. v0.6.1
+# (kernel 7.2.11) is the newest Hadron release 2.4.4 can be built against.
+# Renovate and updatecli track HADRON_VERSION and HADRON_TOOLCHAIN_VERSION by
+# exact name and leave this one alone. Move it when OpenZFS releases a version
+# that supports the kernel of a newer Hadron.
+variable "ZFS_HADRON_VERSION" {
+  default = "v0.6.1"
+}
+
 variable "REGISTRY" {
   default = "ghcr.io/kairos-io/hadron-layers"
 }
@@ -109,10 +121,13 @@ target "zfs" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
-    HADRON_VERSION           = HADRON_VERSION
+    HADRON_TOOLCHAIN_VERSION = ZFS_HADRON_VERSION
+    HADRON_VERSION           = ZFS_HADRON_VERSION
   }
-  labels    = common_labels("zfs", "OpenZFS kernel module and userspace tools")
+  labels = merge(
+    common_labels("zfs", "OpenZFS kernel module and userspace tools"),
+    { "org.opencontainers.image.base.name" = "ghcr.io/kairos-io/hadron-toolchain:${ZFS_HADRON_VERSION}" },
+  )
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/zfs:${TAG}"]
 }
