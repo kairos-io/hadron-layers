@@ -1,0 +1,29 @@
+---
+name: containerd-shim-wasmtime layer version updates
+
+sources:
+  wasmtime_shim:
+    # runwasi releases every shim from one repository and prefixes each tag
+    # with the shim's name (containerd-shim-wasmtime/v0.6.1). The Dockerfile
+    # downloads release assets, so the version has to name a published release.
+    kind: githubrelease
+    spec:
+      owner: containerd
+      repository: runwasi
+      versionfilter:
+        kind: regex/semver
+        regex: '^containerd-shim-wasmtime/v([0-9]+\.[0-9]+\.[0-9]+)$'
+        pattern: "*"
+    transformers:
+      - trimprefix: containerd-shim-wasmtime/v
+
+targets:
+  wasmtime_shim_version:
+    name: 'WASMTIME_SHIM_VERSION in containerd-shim-wasmtime/Dockerfile updated to {{ source "wasmtime_shim" }}'
+    kind: dockerfile
+    spec:
+      file: containerd-shim-wasmtime/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: WASMTIME_SHIM_VERSION
+    sourceid: wasmtime_shim

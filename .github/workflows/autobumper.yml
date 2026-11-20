@@ -26,6 +26,8 @@ jobs:
           - zfs
           - tailscale
           - htop
+          - containerd-shim-wasmtime
+          - containerd-shim-spin
     steps:
       - name: Install Updatecli
         uses: updatecli/updatecli-action@v3.10.0
