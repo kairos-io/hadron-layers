@@ -1,5 +1,5 @@
 ---
-name: Hadron toolchain version updates
+name: Hadron version updates
 
 sources:
   hadron:
@@ -9,10 +9,10 @@ sources:
       repository: hadron
 
 targets:
-  hadron_toolchain_bake:
-    name: 'HADRON_TOOLCHAIN_VERSION in docker-bake.hcl updated to {{ source "hadron" }}'
+  hadron_bake:
+    name: 'HADRON_VERSION in docker-bake.hcl updated to {{ source "hadron" }}'
     kind: hcl
     spec:
       file: docker-bake.hcl
-      path: variable.HADRON_TOOLCHAIN_VERSION.default
+      path: variable.HADRON_VERSION.default
     sourceid: hadron
