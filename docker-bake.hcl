@@ -18,8 +18,9 @@ variable "HADRON_VERSION" {
 # release, supports kernels up to 7.2 (META: Linux-Maximum 7.2); Hadron v0.6.2
 # and later ship kernel 7.3.x, which no OpenZFS release supports yet. v0.6.1
 # (kernel 7.2.11) is the newest Hadron release 2.4.4 can be built against.
-# updatecli tracks HADRON_VERSION by exact name and leaves this one alone. Move it when OpenZFS releases a version that supports the kernel of a
-# newer Hadron.
+# updatecli tracks HADRON_VERSION by exact name and leaves this one alone.
+# Move it when OpenZFS releases a version that supports the kernel of a newer
+# Hadron.
 variable "ZFS_HADRON_VERSION" {
   default = "v0.6.1"
 }
