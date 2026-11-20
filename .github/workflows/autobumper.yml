@@ -28,9 +28,11 @@ jobs:
           - htop
           - containerd-shim-wasmtime
           - containerd-shim-spin
+          - golang
+          - actions
     steps:
       - name: Install Updatecli
-        uses: updatecli/updatecli-action@v3.11.0
+        uses: updatecli/updatecli-action@v3
 
       - name: Bump ${{ matrix.config }}
         env:
