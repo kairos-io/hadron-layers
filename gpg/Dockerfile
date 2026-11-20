@@ -19,7 +19,7 @@ RUN curl -L https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-${LIBGCRYPT_VERSION
 ARG LIBASSUAN_VERSION=3.0.2
 RUN curl -L https://gnupg.org/ftp/gcrypt/libassuan/libassuan-${LIBASSUAN_VERSION}.tar.bz2 -o libassuan.tar.bz2
 
-ARG LIBKSBA_VERSION=1.8.1
+ARG LIBKSBA_VERSION=1.9.1
 RUN curl -L https://gnupg.org/ftp/gcrypt/libksba/libksba-${LIBKSBA_VERSION}.tar.bz2 -o libksba.tar.bz2
 
 ARG NPTH_VERSION=1.8
