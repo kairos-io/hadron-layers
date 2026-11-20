@@ -197,3 +197,19 @@ if ! (
 fi
 
 echo 'updatecli release-asset sources pass'
+
+# The runner file must name only layers that exist, and every runner it hands
+# out must be set for both arches.
+repository=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+ruby -ryaml -e '
+  cfg = YAML.safe_load_file("'"$repository"'/.github/runners.yaml")
+  layers = Dir.glob("'"$repository"'/*/Dockerfile").map { |f| File.basename(File.dirname(f)) }
+  unknown = cfg.fetch("heavy_layers") - layers
+  abort "runners.yaml heavy_layers has no such layer: #{unknown.join(", ")}" unless unknown.empty?
+  %w[light heavy].each do |kind|
+    %w[amd64 arm64].each do |arch|
+      abort "runners.yaml #{kind}.#{arch} is not set" if cfg.fetch(kind)[arch].to_s.empty?
+    end
+  end
+'
+echo 'runners.yaml pass'
