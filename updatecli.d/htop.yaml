@@ -1,0 +1,27 @@
+---
+name: htop layer version updates
+
+# NCURSES_VERSION is not tracked here on purpose: it must match the ncurses
+# the Hadron base image is built with (NCURSES_VERSION in kairos-io/hadron's
+# Dockerfile), and only versions Hadron publishes to its source cache exist.
+
+sources:
+  htop:
+    kind: githubrelease
+    spec:
+      owner: htop-dev
+      repository: htop
+      versionfilter:
+        kind: semver
+        pattern: "*"
+
+targets:
+  htop_version:
+    name: 'HTOP_VERSION in htop/Dockerfile updated to {{ source "htop" }}'
+    kind: dockerfile
+    spec:
+      file: htop/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: HTOP_VERSION
+    sourceid: htop

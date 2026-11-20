@@ -25,9 +25,12 @@ jobs:
           - drbd
           - zfs
           - tailscale
+          - htop
+          - containerd-shim-wasmtime
+          - containerd-shim-spin
     steps:
       - name: Install Updatecli
-        uses: updatecli/updatecli-action@v3.10.0
+        uses: updatecli/updatecli-action@v3.11.0
 
       - name: Bump ${{ matrix.config }}
         env:

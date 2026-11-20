@@ -8,11 +8,26 @@
 # HADRON_TOOLCHAIN_VERSION has a default for standalone builds; CI supplies it
 # from docker-bake.hcl. The consumer must run a Hadron release whose kernel
 # matches this toolchain.
+#
+# This layer is pinned to Hadron v0.6.1 (kernel 7.2.11), not to the newest
+# Hadron. OpenZFS 2.4.4 supports kernels up to 7.2 (its META says
+# Linux-Maximum 7.2), and configure refuses to build against a newer one:
+#     Cannot build against kernel version 7.3.1-hadron.
+#     The maximum supported kernel version is 7.2.
+# Hadron v0.6.2 and later ship kernel 7.3.x. Support for Linux 7.3 is in
+# OpenZFS master (2.4.99, META Linux-Maximum 7.3 since commit a128b8a07) but in
+# no release yet. The first OpenZFS release whose META lists Linux-Maximum 7.3
+# or higher is the one to move to; then raise the pin to a newer Hadron.
+# Until then, to run ZFS on Hadron v0.6.2 or later, build your own from that
+# release of OpenZFS, or from master:
+#     docker build --build-arg HADRON_TOOLCHAIN_VERSION=<hadron version> \
+#                  --build-arg HADRON_VERSION=<hadron version> \
+#                  --build-arg ZFS_VERSION=<release with Linux 7.3 support> zfs
 ARG ZFS_VERSION=2.4.4
 ARG TIRPC_VERSION=1.3.6
 ARG TIRPC_SHA256=bbd26a8f0df5690a62a47f6aa30f797f3ef8d02560d1bc449a83066b5a1d3508
-ARG HADRON_TOOLCHAIN_VERSION=v0.6.4
-ARG HADRON_VERSION=v0.6.4
+ARG HADRON_TOOLCHAIN_VERSION=v0.6.1
+ARG HADRON_VERSION=v0.6.1
 
 FROM ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION} AS zfs-source
 ARG ZFS_VERSION=2.4.4
