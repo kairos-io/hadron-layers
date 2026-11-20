@@ -213,3 +213,21 @@ awk '
   exit 1
 }
 echo 'layers-ci gate job present'
+
+# The ruleset requires layers-ci in the merge queue, so the workflow must run
+# there, and must not rebuild or publish anything: the pull request already
+# built the same content.
+grep -q '^  merge_group:' "$workflow_file" || {
+  echo "build.yml needs a merge_group trigger so layers-ci reports in the merge queue" >&2
+  exit 1
+}
+awk '
+  /^  (build|merge):/ { job = $1; next }
+  /^  [a-z-]+:/ { job = "" }
+  job && /^    if:/ && /merge_group/ { seen[job] = 1 }
+  END { exit !(seen["build:"] && seen["merge:"]) }
+' "$workflow_file" || {
+  echo "the build and merge jobs must be skipped on merge_group" >&2
+  exit 1
+}
+echo 'merge queue runs the gate only'
