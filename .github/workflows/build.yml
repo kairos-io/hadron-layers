@@ -19,9 +19,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Read-only by default. A job that needs more asks for it in its own
+# permissions block.
 permissions:
   contents: read
-  packages: write
 
 jobs:
   # Auto-discover layer directories. Every layer is built on every run — the
@@ -31,6 +32,7 @@ jobs:
   discover:
     name: Discover layers
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
       sysext_skip_layers: ${{ steps.settings.outputs.sysext_skip_layers }}
@@ -78,6 +80,11 @@ jobs:
     name: Build ${{ matrix.layer }} (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     needs: discover
+    # A hung build would hold a 32 core VM for the six hours GitHub allows.
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -237,6 +244,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [discover, build]
     if: github.event_name != 'pull_request'
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -298,3 +309,35 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           REGISTRY: ghcr.io/kairos-io/hadron-layers
         run: docker buildx imagetools inspect "$REGISTRY/$LAYER:$VERSION"
+
+  # The one check to require on main. A matrix has one check per layer and
+  # arch, and that list changes whenever a layer is added, so requiring the
+  # matrix jobs by name does not hold. Require this job instead: it is green
+  # only when discover and every build succeeded, and on a push or tag when
+  # every manifest merge succeeded too. The merge jobs are skipped on a pull
+  # request on purpose, so a skipped merge counts only there.
+  layers-ci:
+    name: layers-ci
+    if: always()
+    needs: [discover, build, merge]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every required job passed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          # A jq error must fail this step, never leave $failed empty.
+          set -euo pipefail
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          failed=$(echo "$NEEDS" | jq -r --arg event "$EVENT" '
+            [to_entries[]
+             | select(.value.result != "success"
+                      and ((.key == "merge" and $event == "pull_request" and .value.result == "skipped") | not))
+             | .key] | join(", ")')
+          if [ -n "$failed" ]; then
+            echo "::error title=layers-ci::Not every required job passed: ${failed}"
+            exit 1
+          fi
