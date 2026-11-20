@@ -18,8 +18,7 @@ variable "HADRON_VERSION" {
 # release, supports kernels up to 7.2 (META: Linux-Maximum 7.2); Hadron v0.6.2
 # and later ship kernel 7.3.x, which no OpenZFS release supports yet. v0.6.1
 # (kernel 7.2.11) is the newest Hadron release 2.4.4 can be built against.
-# Renovate and updatecli track HADRON_VERSION by exact name and leave this one
-# alone. Move it when OpenZFS releases a version that supports the kernel of a
+# updatecli tracks HADRON_VERSION by exact name and leaves this one alone. Move it when OpenZFS releases a version that supports the kernel of a
 # newer Hadron.
 variable "ZFS_HADRON_VERSION" {
   default = "v0.6.1"
@@ -158,8 +157,8 @@ target "tailscale" {
   # The golang tag below is the only version in this file that is not a
   # variable, so it is also the only one that can fall behind the Dockerfile it
   # describes. It must stay equal to the builder FROM in tailscale/Dockerfile.
-  # renovate.json groups both under the golang dependency so one pull request
-  # moves them together, and build_test.sh fails the build if they ever differ.
+  # updatecli.d/golang.yaml moves both in one pull request, and build_test.sh
+  # fails the build if they ever differ.
   labels = {
     "org.opencontainers.image.title"       = "tailscale"
     "org.opencontainers.image.description" = "Tailscale node agent (tailscaled) and CLI"

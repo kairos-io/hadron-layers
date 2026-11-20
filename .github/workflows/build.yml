@@ -9,6 +9,9 @@ on:
   pull_request:
     branches:
       - main
+  # The merge queue runs this workflow on a temporary branch so the required
+  # layers-ci check can report. It builds nothing there, see layers-ci below.
+  merge_group:
   workflow_dispatch:
 
 # Serialize runs per ref so only one main build runs at a time.
@@ -101,6 +104,9 @@ jobs:
     name: Build ${{ matrix.layer }} (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     needs: discover
+    # The pull request already built exactly this content. The queue does not
+    # build it a second time.
+    if: github.event_name != 'merge_group'
     # A hung build would hold a 32 core VM for the six hours GitHub allows.
     timeout-minutes: 60
     permissions:
@@ -258,7 +264,7 @@ jobs:
     name: Merge ${{ matrix.layer }} manifest
     runs-on: ubuntu-latest
     needs: [discover, build]
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.event_name != 'merge_group'
     timeout-minutes: 10
     permissions:
       contents: read
@@ -330,7 +336,9 @@ jobs:
   # matrix jobs by name does not hold. Require this job instead: it is green
   # only when discover and every build succeeded, and on a push or tag when
   # every manifest merge succeeded too. The merge jobs are skipped on a pull
-  # request on purpose, so a skipped merge counts only there.
+  # request on purpose, so a skipped merge counts only there. In the merge
+  # queue both build and merge are skipped on purpose: the pull request
+  # already built the same content, so the queue only has to report the check.
   layers-ci:
     name: layers-ci
     if: always()
@@ -350,7 +358,9 @@ jobs:
           failed=$(echo "$NEEDS" | jq -r --arg event "$EVENT" '
             [to_entries[]
              | select(.value.result != "success"
-                      and ((.key == "merge" and $event == "pull_request" and .value.result == "skipped") | not))
+                      and ((.value.result == "skipped"
+                            and ((.key == "merge" and $event == "pull_request")
+                                 or ($event == "merge_group" and (.key == "build" or .key == "merge")))) | not))
              | .key] | join(", ")')
           if [ -n "$failed" ]; then
             echo "::error title=layers-ci::Not every required job passed: ${failed}"
