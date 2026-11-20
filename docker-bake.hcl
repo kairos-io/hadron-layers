@@ -56,6 +56,12 @@ variable "PLATFORMS" {
 # contributed recipe carried on a best-effort basis. Both are built, tested and
 # published by the same CI, so the vendor label stays Kairos either way; this
 # label is about maintenance, not about who distributes the image.
+#
+# A target can add informational labels with merge(), the way zfs overrides
+# base.name. None is required, and a missing one means "no claim":
+#   io.kairos.hadron.layer.status         stable, beta or alpha (default stable)
+#   io.kairos.hadron.layer.hadron-compat  semver range of Hadron, e.g. ">=0.6.1" (default *)
+#   io.kairos.hadron.layer.kernel-compat  semver range of the kernel (default *)
 function "common_labels" {
   params = [title, description, support]
   result = {

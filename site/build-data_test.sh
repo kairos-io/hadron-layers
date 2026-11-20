@@ -10,7 +10,7 @@ mkdir -p "$test_dir/bin"
 cat > "$test_dir/bin/docker" <<'EOF'
 #!/usr/bin/env bash
 cat <<'JSON'
-{"target":{"git":{"args":{"HADRON_TOOLCHAIN_VERSION":"v1.2.3"},"labels":{"org.opencontainers.image.title":"git","org.opencontainers.image.description":"Git","org.opencontainers.image.source":"https://github.com/kairos-io/hadron-layers","io.kairos.hadron.layer.support":"community"},"tags":["ghcr.io/kairos-io/hadron-layers/git:latest"]},"gpg":{"args":{"HADRON_TOOLCHAIN_VERSION":"v1.2.3"},"labels":{"org.opencontainers.image.title":"gpg","org.opencontainers.image.description":"GPG","org.opencontainers.image.source":"https://github.com/kairos-io/hadron-layers"},"tags":["ghcr.io/kairos-io/hadron-layers/gpg:latest"]}}}
+{"target":{"git":{"args":{"HADRON_TOOLCHAIN_VERSION":"v1.2.3"},"labels":{"org.opencontainers.image.title":"git","org.opencontainers.image.description":"Git","org.opencontainers.image.source":"https://github.com/kairos-io/hadron-layers","io.kairos.hadron.layer.support":"community","io.kairos.hadron.layer.status":"beta","io.kairos.hadron.layer.hadron-compat":">=0.6.1","io.kairos.hadron.layer.kernel-compat":""},"tags":["ghcr.io/kairos-io/hadron-layers/git:latest"]},"gpg":{"args":{"HADRON_TOOLCHAIN_VERSION":"v1.2.3"},"labels":{"org.opencontainers.image.title":"gpg","org.opencontainers.image.description":"GPG","org.opencontainers.image.source":"https://github.com/kairos-io/hadron-layers"},"tags":["ghcr.io/kairos-io/hadron-layers/gpg:latest"]}}}
 JSON
 EOF
 
@@ -59,9 +59,14 @@ jq -e '
 jq -e '(.layers[] | select(.name == "git") | .support) == "community"' "$output" >/dev/null
 jq -e '(.layers[] | select(.name == "gpg") | .support) == "official"' "$output" >/dev/null
 
+## status, hadron-compat and kernel-compat are informational: a value is copied
+## through as text, and a missing or empty one means no claim (stable, `*`).
+jq -e '(.layers[] | select(.name == "git") | [.status, .hadron_compat, .kernel_compat]) == ["beta", ">=0.6.1", "*"]' "$output" >/dev/null
+jq -e '(.layers[] | select(.name == "gpg") | [.status, .hadron_compat, .kernel_compat]) == ["stable", "*", "*"]' "$output" >/dev/null
+
 if grep -qE 'unrelated|s390x|othermanifest' "$output"; then
   echo "unrelated sysext tags leaked into releases.json" >&2
   exit 1
 fi
 
-echo "build-data sysext and support tests passed"
+echo "build-data sysext, support and compat label tests passed"

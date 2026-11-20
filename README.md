@@ -96,6 +96,18 @@ Both are built, tested and published by the same pipeline, so the image is as
 trustworthy either way. The label is about who maintains the recipe, which is
 why `org.opencontainers.image.vendor` stays `Kairos` for both.
 
+A layer can also carry informational labels, copied into `releases.json` so a
+consumer can filter on them. None is required, and a missing one means no claim:
+
+| Label | `releases.json` field | Values | Default |
+|-------|-----------------------|--------|---------|
+| `io.kairos.hadron.layer.status` | `status` | `stable`, `beta`, `alpha` | `stable` |
+| `io.kairos.hadron.layer.hadron-compat` | `hadron_compat` | semver range, e.g. `>=0.6.1`, `==0.6.1` | `*` |
+| `io.kairos.hadron.layer.kernel-compat` | `kernel_compat` | semver range | `*` |
+
+The compat fields are stored as text; the consumer evaluates the range. Add
+them to a target with `merge(common_labels(...), { ... })`.
+
 ## How it works
 
 Each layer lives in its own subdirectory (e.g. `git/Dockerfile`) and follows this pattern:

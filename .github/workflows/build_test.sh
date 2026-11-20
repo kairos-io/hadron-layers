@@ -304,3 +304,14 @@ while read -r layer support; do
 done <<<"$support_per_target"
 
 echo 'every official layer has an updatecli manifest and an autobumper matrix row'
+
+# io.kairos.hadron.layer.status is optional, but when a layer sets it the UI and
+# consumers filter on a closed set, so a typo would hide the layer instead.
+bad_status=$(grep -oE '"io\.kairos\.hadron\.layer\.status"[[:space:]]*=[[:space:]]*"[^"]*"' "$repository/docker-bake.hcl" |
+  sed 's/.*=[[:space:]]*"//; s/"$//' | grep -vxE 'stable|beta|alpha' || true)
+if [[ -n "$bad_status" ]]; then
+  echo "docker-bake.hcl sets io.kairos.hadron.layer.status to '$bad_status'. Use stable, beta or alpha, or leave it unset for stable." >&2
+  exit 1
+fi
+
+echo 'layer status labels are stable, beta or alpha'
