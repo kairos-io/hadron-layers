@@ -77,6 +77,7 @@ the raw image with your own keys, which is the only option under Trusted Boot.
 | `drbd` | `ghcr.io/kairos-io/hadron-layers/drbd` | Out-of-tree DRBD 9 kernel module and drbd-utils |
 | `zfs` | `ghcr.io/kairos-io/hadron-layers/zfs` | OpenZFS kernel module and userspace tools |
 | `tailscale` | `ghcr.io/kairos-io/hadron-layers/tailscale` | Tailscale node agent (tailscaled) and CLI |
+| `htop` | `ghcr.io/kairos-io/hadron-layers/htop` | Interactive process viewer |
 | `containerd-shim-wasmtime` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-wasmtime` | containerd shim for WebAssembly workloads on wasmtime (runwasi) |
 | `containerd-shim-spin` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-spin` | containerd shim for Spin WebAssembly applications |
 
@@ -126,7 +127,7 @@ The `drbd` and `zfs` layers are **out-of-tree kernel modules** and deviate from 
 ## Automation
 
 - **Build & publish** – `.github/workflows/build.yml` runs on every push to `main` via `docker buildx bake`, building multi-arch images (`linux/amd64`, `linux/arm64`) and pushing to GHCR.
-- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, zfs, tailscale). Renovate handles action pins and other dependencies.
+- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, zfs, tailscale, htop). Renovate handles action pins and other dependencies.
 - **Auto-approve** – `.github/workflows/autoapprove.yml` automatically approves and enables squash-merge on PRs opened by the updatecli bots (`github-actions[bot]`, `ci-robbot`) and Renovate (`renovate[bot]`).
 - **Releases page** – `.github/workflows/pages.yml` regenerates [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json) from the GHCR package versions API and deploys `site/index.html` to GitHub Pages after every successful main/tag build.
 

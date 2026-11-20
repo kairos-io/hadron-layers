@@ -25,6 +25,7 @@ jobs:
           - drbd
           - zfs
           - tailscale
+          - htop
           - containerd-shim-wasmtime
           - containerd-shim-spin
     steps:
