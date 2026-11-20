@@ -161,8 +161,8 @@ target "tailscale" {
   # The golang tag below is the only version in this file that is not a
   # variable, so it is also the only one that can fall behind the Dockerfile it
   # describes. It must stay equal to the builder FROM in tailscale/Dockerfile.
-  # renovate.json groups both under the golang dependency so one pull request
-  # moves them together, and build_test.sh fails the build if they ever differ.
+  # updatecli.d/golang.yaml moves both in one pull request, and build_test.sh
+  # fails the build if they ever differ.
   labels = {
     "org.opencontainers.image.title"       = "tailscale"
     "org.opencontainers.image.description" = "Tailscale node agent (tailscaled) and CLI"
