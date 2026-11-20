@@ -1,0 +1,14 @@
+---
+name: GitHub Actions versions
+
+# Every `uses: owner/action@vN` in the workflows is moved to the newest major
+# tag. The tags stay floating majors (v7, not v7.0.1 and not a commit SHA), as
+# they are now; digest pinning is off.
+autodiscovery:
+  crawlers:
+    github/action:
+      rootdir: .
+      digest: false
+      versionfilter:
+        kind: regex
+        pattern: '^v[0-9]+$'

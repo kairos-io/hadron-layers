@@ -16,3 +16,13 @@ targets:
       file: docker-bake.hcl
       path: variable.HADRON_TOOLCHAIN_VERSION.default
     sourceid: hadron
+  hadron_bake:
+    # HADRON_VERSION is the Hadron base image tag of every layer's test stage.
+    # It is the same release tag as the toolchain, so both move together.
+    # ZFS_HADRON_VERSION is a separate, pinned variable and is left alone.
+    name: 'HADRON_VERSION in docker-bake.hcl updated to {{ source "hadron" }}'
+    kind: hcl
+    spec:
+      file: docker-bake.hcl
+      path: variable.HADRON_VERSION.default
+    sourceid: hadron

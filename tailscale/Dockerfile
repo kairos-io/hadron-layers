@@ -8,8 +8,8 @@
 # statically linked binaries with no libc dependency, so the final layer needs
 # nothing from the toolchain and drops straight onto Hadron.
 #
-# Renovate tracks the golang tag on the FROM line below; updatecli tracks
-# TAILSCALE_VERSION, see updatecli.d/tailscale.yaml.
+# updatecli tracks the golang tag on the FROM line below, see
+# updatecli.d/golang.yaml, and TAILSCALE_VERSION, see updatecli.d/tailscale.yaml.
 
 ARG HADRON_VERSION
 
