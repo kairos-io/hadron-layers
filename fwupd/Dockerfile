@@ -208,22 +208,29 @@ RUN find /output -name "*.h"  -delete && \
            /output/usr/share/info \
            /output/usr/share/aclocal \
            /output/usr/share/gettext \
-           /output/usr/share/locale
+           /output/usr/share/locale && \
+    mkdir -p /final && \
+    tar -C /output -cf - \
+        etc \
+        usr/bin \
+        usr/lib \
+        usr/libexec \
+        usr/share/dbus-1 \
+        usr/share/fwupd \
+        usr/share/icons \
+        usr/share/metainfo \
+      | tar -C /final -xf -
 
 # Final layer: only the built fwupd binaries and their runtime dependencies.
+# Keep this a single COPY so the image has exactly one layer: AuroraBoot
+# builds the sysext from the last image layer only, so any files in
+# earlier layers would be missing from the sysext.
 # Use as a layer on top of Hadron:
 #   FROM ghcr.io/kairos-io/hadron:VERSION
 #   COPY --from=ghcr.io/kairos-io/fwupd:TAG / /
 # Or create a sysextension with the help of Auroraboot (https://github.com/kairos-io/auroraboot)
 FROM scratch AS default
-COPY --from=merge /output/etc/ /etc/
-COPY --from=merge /output/usr/bin/ /usr/bin/
-COPY --from=merge /output/usr/lib/ /usr/lib/
-COPY --from=merge /output/usr/libexec/ /usr/libexec/
-COPY --from=merge /output/usr/share/dbus-1/ /usr/share/dbus-1/
-COPY --from=merge /output/usr/share/fwupd/ /usr/share/fwupd/
-COPY --from=merge /output/usr/share/icons/ /usr/share/icons/
-COPY --from=merge /output/usr/share/metainfo/ /usr/share/metainfo/
+COPY --from=merge /final/ /
 
 # Smoke-test the built layer against a Hadron base image. Any RUN failure
 # here fails the build and gates the release step in CI. fwupd depends on
