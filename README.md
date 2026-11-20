@@ -77,6 +77,8 @@ the raw image with your own keys, which is the only option under Trusted Boot.
 | `drbd` | `ghcr.io/kairos-io/hadron-layers/drbd` | Out-of-tree DRBD 9 kernel module and drbd-utils |
 | `zfs` | `ghcr.io/kairos-io/hadron-layers/zfs` | OpenZFS kernel module and userspace tools |
 | `tailscale` | `ghcr.io/kairos-io/hadron-layers/tailscale` | Tailscale node agent (tailscaled) and CLI |
+| `containerd-shim-wasmtime` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-wasmtime` | containerd shim for WebAssembly workloads on wasmtime (runwasi) |
+| `containerd-shim-spin` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-spin` | containerd shim for Spin WebAssembly applications |
 
 ## How it works
 

@@ -50,7 +50,7 @@ function "common_labels" {
 }
 
 group "default" {
-  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale"]
+  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "containerd-shim-wasmtime", "containerd-shim-spin"]
 }
 
 target "git" {
@@ -145,4 +145,30 @@ target "tailscale" {
   }
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/tailscale:${TAG}"]
+}
+
+target "containerd-shim-wasmtime" {
+  context    = "containerd-shim-wasmtime"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels    = common_labels("containerd-shim-wasmtime", "containerd shim for WebAssembly workloads on wasmtime (runwasi)")
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/containerd-shim-wasmtime:${TAG}"]
+}
+
+target "containerd-shim-spin" {
+  context    = "containerd-shim-spin"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels    = common_labels("containerd-shim-spin", "containerd shim for Spin WebAssembly applications")
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/containerd-shim-spin:${TAG}"]
 }
