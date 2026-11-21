@@ -137,7 +137,13 @@ target "zfs" {
   }
   labels = merge(
     common_labels("zfs", "OpenZFS kernel module and userspace tools", "official"),
-    { "org.opencontainers.image.base.name" = "ghcr.io/kairos-io/hadron-toolchain:${ZFS_HADRON_VERSION}" },
+    {
+      "org.opencontainers.image.base.name" = "ghcr.io/kairos-io/hadron-toolchain:${ZFS_HADRON_VERSION}"
+      # The module is built for the kernel of this one Hadron release and only
+      # loads on a Hadron that ships the same kernel. Derived from the pin, so
+      # moving ZFS_HADRON_VERSION moves the label with it.
+      "io.kairos.hadron.layer.hadron-compat" = "==${trimprefix(ZFS_HADRON_VERSION, "v")}"
+    },
   )
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/zfs:${TAG}"]
