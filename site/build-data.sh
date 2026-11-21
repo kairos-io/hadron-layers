@@ -143,10 +143,23 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
       | {version, arch, oci: ($image + "@" + $v.name)}
     ]' <<<"$sysext_raw")
 
-  tags=$(jq --argjson artifacts "$sysext_entries" '
+  ## The multi-arch sysext image carries the plain version tag (no -arch
+  ## suffix) and is what a client installs: the registry picks the platform.
+  ## It goes in its own key, not under sysext, so consumers that treat the keys
+  ## of sysext as architectures keep working.
+  sysext_index=$(jq --arg image "ghcr.io/${NAMESPACE}/${sysext_pkg}" '[
+      .[]
+      | . as $v
+      | (.metadata.container.tags // [])[]
+      | select(test("-(amd64|arm64)$") | not)
+      | {version: ., oci: ($image + "@" + $v.name)}
+    ]' <<<"$sysext_raw")
+
+  tags=$(jq --argjson artifacts "$sysext_entries" --argjson index "$sysext_index" '
     map(. as $tag
       | .sysext = (reduce ($artifacts[] | select(.version == $tag.tag)) as $artifact
-          ({}; .[$artifact.arch] = {oci: $artifact.oci})))
+          ({}; .[$artifact.arch] = {oci: $artifact.oci}))
+      | .sysext_index = (([$index[] | select(.version == $tag.tag)][0]) // {}))
   ' <<<"$tags")
 
   ## "Latest" is the highest-semver tag if any parse as semver, else the newest by date.

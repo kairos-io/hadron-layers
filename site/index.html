@@ -577,11 +577,22 @@ extensions:
     archSelect.setAttribute("aria-label", "Select architecture");
     var sysextCode = document.createElement("code");
 
+    function tagEntry(tag) {
+      return layer.tags.filter(function (t) { return t.tag === tag; })[0] || {};
+    }
     function sysextFor(tag) {
-      var found = layer.tags.filter(function (t) { return t.tag === tag; })[0];
-      return (found && found.sysext) || {};
+      return tagEntry(tag).sysext || {};
+    }
+    // The multi-arch image when the tag has one: the registry picks the
+    // architecture, so no selector is needed. Older tags only have the
+    // per-architecture references.
+    function sysextIndexRef(tag) {
+      var idx = tagEntry(tag).sysext_index;
+      return (idx && idx.oci) || "";
     }
     function sysextRef() {
+      var multi = sysextIndexRef(versionSelect.value);
+      if (multi) return multi;
       var entry = sysextFor(versionSelect.value)[archSelect.value];
       return entry ? entry.oci : "";
     }
@@ -603,7 +614,9 @@ extensions:
         archSelect.appendChild(opt);
       });
       if (arches.indexOf(chosenArch) !== -1) archSelect.value = chosenArch;
-      sysextBar.style.display = arches.length ? "" : "none";
+      var multi = sysextIndexRef(versionSelect.value);
+      archSelect.style.display = multi ? "none" : "";
+      sysextBar.style.display = (arches.length || multi) ? "" : "none";
       sysextCode.textContent = sysextCommand();
     }
     var sysextCopyBtn = copyButton("Copy", sysextCommand, null, copyIcon);

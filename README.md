@@ -11,12 +11,17 @@ FROM ghcr.io/kairos-io/hadron:VERSION
 COPY --from=ghcr.io/kairos-io/hadron-layers/git:latest / /
 ```
 
-Each compatible layer build also publishes unsigned system extension images as
-OCI artifacts:
+Each compatible layer build also publishes an unsigned system extension as an
+OCI image that holds `<name>.sysext.raw`. It has the same version tag as the
+layer, under the `sysext/` package, and is one multi-arch image, so the
+registry picks the architecture:
 
 ```text
-ghcr.io/kairos-io/hadron-layers/sysext/<name>:<software-version>-<arch>
+ghcr.io/kairos-io/hadron-layers/sysext/<name>:<software-version>
 ```
+
+The per-architecture images stay as `<software-version>-<arch>`; the multi-arch
+tag is built from them.
 
 Every layer gets a sysext. Add a package to the `publishing.sysext.skip` list in
 `publishing.yaml` to skip sysext creation and publication for it. This file
@@ -30,18 +35,18 @@ finds any.
 Use an immutable digest from the releases index when you pull one:
 
 ```bash
-oras pull ghcr.io/kairos-io/hadron-layers/sysext/git@sha256:<manifest-digest>
+kairos-agent sysext install oci://ghcr.io/kairos-io/hadron-layers/sysext/git@sha256:<index-digest>
 ```
 
-The artifact contains `<name>.sysext.raw` with media type
-`application/vnd.kairos.sysext.raw`. These public artifacts are unsigned
+The image contains `<name>.sysext.raw`. These public images are unsigned
 because Trusted Boot requires keys that belong to the target deployment. Sign
 the raw image with those keys before using it in a Trusted Boot environment.
 
 Each layer version in `releases.json` has a `sysext` object. Available
 architectures appear as `tags[].sysext.amd64.oci` and
 `tags[].sysext.arm64.oci`; each value is a digest-pinned OCI reference. The
-object is empty when no sysext is available for that version.
+multi-arch image is `tags[].sysext_index.oci`. Both are empty when no sysext
+is available for that version.
 
 ### On a Kairos node
 

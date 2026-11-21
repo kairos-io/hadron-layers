@@ -213,12 +213,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Set up ORAS
-        if: github.event_name != 'pull_request'
-        uses: oras-project/setup-oras@v2
-        with:
-          version: 1.3.0
-
       # AuroraBoot creates verity metadata but omits signature partitions when
       # no deployment-specific key and certificate are supplied.
       - name: Create unsigned sysext
@@ -250,7 +244,11 @@ jobs:
             --arch "$ARCH" --output /output "$LAYER" "$source_image"
           test -s "/tmp/sysext/${LAYER}.sysext.raw"
 
-      - name: Push sysext artifact
+      # Pushed as a plain image (FROM scratch holding the .raw), not an oras
+      # artifact: kairos-agent installs an oci:// source by extracting image
+      # layers, so only an image yields the file, and the image config carries
+      # the platform the merge job needs to build one multi-arch tag.
+      - name: Push sysext image
         if: ${{ github.event_name != 'pull_request' && !contains(fromJSON(needs.discover.outputs.sysext_skip_layers), matrix.layer) }}
         working-directory: /tmp/sysext
         env:
@@ -259,10 +257,13 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           REGISTRY: ghcr.io/kairos-io/hadron-layers
         run: |
-          oras push \
-            --artifact-type application/vnd.kairos.sysext.raw \
-            "${REGISTRY}/sysext/${LAYER}:${VERSION}-${ARCH}" \
-            "${LAYER}.sysext.raw:application/vnd.kairos.sysext.raw"
+          printf 'FROM scratch\nCOPY %s.sysext.raw /\n' "$LAYER" > Dockerfile
+          docker buildx build \
+            --platform "linux/${ARCH}" \
+            --provenance=false --sbom=false \
+            --push \
+            -t "${REGISTRY}/sysext/${LAYER}:${VERSION}-${ARCH}" \
+            .
 
   # Combine the per-arch digests for each layer into a single multi-arch image
   # tag. Skipped on pull_request (nothing was pushed there).
@@ -336,6 +337,22 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           REGISTRY: ghcr.io/kairos-io/hadron-layers
         run: docker buildx imagetools inspect "$REGISTRY/$LAYER:$VERSION"
+
+      # Same version tag as the layer, under the sysext/ package, so a client
+      # installs sysext/<layer>:<version> and the registry picks its arch. The
+      # per-arch tags stay: releases.json records them.
+      - name: Create multi-arch sysext manifest
+        if: ${{ !contains(fromJSON(needs.discover.outputs.sysext_skip_layers), matrix.layer) }}
+        env:
+          LAYER: ${{ matrix.layer }}
+          VERSION: ${{ steps.version.outputs.value }}
+          REGISTRY: ghcr.io/kairos-io/hadron-layers
+        run: |
+          docker buildx imagetools create \
+            -t "$REGISTRY/sysext/$LAYER:$VERSION" \
+            "$REGISTRY/sysext/$LAYER:$VERSION-amd64" \
+            "$REGISTRY/sysext/$LAYER:$VERSION-arm64"
+          docker buildx imagetools inspect "$REGISTRY/sysext/$LAYER:$VERSION"
 
   # The one check to require on main. A matrix has one check per layer and
   # arch, and that list changes whenever a layer is added, so requiring the
