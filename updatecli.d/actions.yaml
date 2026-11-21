@@ -9,6 +9,13 @@ autodiscovery:
     github/action:
       rootdir: .
       digest: false
+      # updatecli-action publishes no floating major tag newer than v1 (there
+      # is v1 and then only full versions such as v3.11.0), so the major-only
+      # filter below would "update" it back to v1. It is pinned to a full tag
+      # in autobumper.yml and left alone here.
+      ignore:
+        - actions:
+            "updatecli/updatecli-action": ""
       versionfilter:
         kind: regex
         pattern: '^v[0-9]+$'
