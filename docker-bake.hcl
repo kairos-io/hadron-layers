@@ -46,8 +46,21 @@ variable "PLATFORMS" {
 
 # common_labels returns the OCI image labels shared by every layer. The
 # per-layer title and description are merged in at the target level.
+#
+# `support` records who keeps the recipe working: `official` for a layer the
+# Kairos maintainers maintain, which has an updatecli.d manifest and a row in
+# the autobumper matrix so breakage blocks the build, and `community` for a
+# contributed recipe carried on a best-effort basis. Both are built, tested and
+# published by the same CI, so the vendor label stays Kairos either way; this
+# label is about maintenance, not about who distributes the image.
+#
+# A target can add informational labels with merge(), the way zfs overrides
+# base.name. None is required, and a missing one means "no claim":
+#   io.kairos.hadron.layer.status         stable, beta or alpha (default stable)
+#   io.kairos.hadron.layer.hadron-compat  semver range of Hadron, e.g. ">=0.6.1" (default *)
+#   io.kairos.hadron.layer.kernel-compat  semver range of the kernel (default *)
 function "common_labels" {
-  params = [title, description]
+  params = [title, description, support]
   result = {
     "org.opencontainers.image.title"       = title
     "org.opencontainers.image.description" = description
@@ -55,6 +68,7 @@ function "common_labels" {
     "org.opencontainers.image.url"         = REPO_URL
     "org.opencontainers.image.vendor"      = "Kairos"
     "org.opencontainers.image.base.name"   = "ghcr.io/kairos-io/hadron-toolchain:${HADRON_VERSION}"
+    "io.kairos.hadron.layer.support"       = support
   }
 }
 
@@ -70,7 +84,7 @@ target "git" {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("git", "Git version control system")
+  labels    = common_labels("git", "Git version control system", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/git:${TAG}"]
 }
@@ -83,7 +97,7 @@ target "gpg" {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("gpg", "GnuPG and its runtime libraries")
+  labels    = common_labels("gpg", "GnuPG and its runtime libraries", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/gpg:${TAG}"]
 }
@@ -96,7 +110,7 @@ target "fwupd" {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("fwupd", "Firmware update daemon")
+  labels    = common_labels("fwupd", "Firmware update daemon", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/fwupd:${TAG}"]
 }
@@ -108,7 +122,7 @@ target "drbd" {
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
   }
-  labels    = common_labels("drbd", "Out-of-tree DRBD 9 kernel module and drbd-utils")
+  labels    = common_labels("drbd", "Out-of-tree DRBD 9 kernel module and drbd-utils", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/drbd:${TAG}"]
 }
@@ -122,7 +136,7 @@ target "zfs" {
     HADRON_VERSION           = ZFS_HADRON_VERSION
   }
   labels = merge(
-    common_labels("zfs", "OpenZFS kernel module and userspace tools"),
+    common_labels("zfs", "OpenZFS kernel module and userspace tools", "official"),
     { "org.opencontainers.image.base.name" = "ghcr.io/kairos-io/hadron-toolchain:${ZFS_HADRON_VERSION}" },
   )
   platforms = PLATFORMS
@@ -137,7 +151,7 @@ target "htop" {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("htop", "Interactive process viewer")
+  labels    = common_labels("htop", "Interactive process viewer", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/htop:${TAG}"]
 }
@@ -167,6 +181,7 @@ target "tailscale" {
     "org.opencontainers.image.url"         = REPO_URL
     "org.opencontainers.image.vendor"      = "Kairos"
     "org.opencontainers.image.base.name"   = "docker.io/library/golang:1.27.4-alpine"
+    "io.kairos.hadron.layer.support"       = "official"
   }
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/tailscale:${TAG}"]
@@ -180,7 +195,7 @@ target "containerd-shim-wasmtime" {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("containerd-shim-wasmtime", "containerd shim for WebAssembly workloads on wasmtime (runwasi)")
+  labels    = common_labels("containerd-shim-wasmtime", "containerd shim for WebAssembly workloads on wasmtime (runwasi)", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/containerd-shim-wasmtime:${TAG}"]
 }
@@ -193,7 +208,7 @@ target "containerd-shim-spin" {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
-  labels    = common_labels("containerd-shim-spin", "containerd shim for Spin WebAssembly applications")
+  labels    = common_labels("containerd-shim-spin", "containerd shim for Spin WebAssembly applications", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/containerd-shim-spin:${TAG}"]
 }
