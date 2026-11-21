@@ -113,10 +113,11 @@
     font-size: .78rem;
     color: var(--muted);
   }
-  .badge.latest { color: var(--accent); border-color: var(--accent); }
   .badge.support-official { color: var(--accent-2); border-color: var(--accent-2); }
   .badge.support-community { color: var(--text); }
   .badge.status-beta { color: var(--warn, #d9a441); border-color: var(--warn, #d9a441); }
+  .badge.compat-hadron { color: var(--accent); border-color: var(--accent); background: var(--highlight); }
+  .badge.compat-kernel { color: #a371f7; border-color: #a371f7; background: rgba(163, 113, 247, .12); }
   .badge.status-alpha { color: var(--danger, #e5534b); border-color: var(--danger, #e5534b); }
   .card-body { padding: 0 18px 16px; }
   .pull-cmd {
@@ -225,7 +226,6 @@
     margin: 0 0 10px;
   }
   .note code { white-space: nowrap; }
-  .badge.sysext { color: var(--accent-2); border-color: var(--accent-2); }
   .sysext-cmd { margin-top: -4px; }
   .sysext-cmd .label {
     font-size: .7rem;
@@ -497,37 +497,20 @@ extensions:
       badges.appendChild(statusBadge);
     }
     // "*" or an empty value means any version, so only a real range is shown.
-    [["hadron_compat", "hadron", "Hadron releases this layer works with"],
-     ["kernel_compat", "kernel", "Kernel versions this layer works with"]].forEach(function (c) {
+    [["hadron_compat", "hadron", "Hadron version", "Hadron releases this layer works with"],
+     ["kernel_compat", "kernel", "Kernel version", "Kernel versions this layer works with"]].forEach(function (c) {
       var range = layer[c[0]];
       if (!range || range === "*") return;
       var compatBadge = document.createElement("span");
-      compatBadge.className = "badge compat";
-      compatBadge.textContent = c[1] + " " + range;
-      compatBadge.title = c[2] + " (semver range)";
+      compatBadge.className = "badge compat-" + c[1];
+      compatBadge.textContent = c[2] + " " + range;
+      compatBadge.title = c[3] + " (semver range)";
       badges.appendChild(compatBadge);
     });
-    if (layer.latest) {
-      var latestBadge = document.createElement("span");
-      latestBadge.className = "badge latest";
-      latestBadge.textContent = "latest: " + layer.latest;
-      badges.appendChild(latestBadge);
-    }
     var tagCountBadge = document.createElement("span");
     tagCountBadge.className = "badge";
     tagCountBadge.textContent = layer.tags.length + " tag" + (layer.tags.length === 1 ? "" : "s");
     badges.appendChild(tagCountBadge);
-    var sysextTags = layer.tags.filter(function (t) {
-      return t.sysext && Object.keys(t.sysext).length;
-    });
-    if (sysextTags.length) {
-      var sysextBadge = document.createElement("span");
-      sysextBadge.className = "badge sysext";
-      sysextBadge.textContent = "sysext";
-      sysextBadge.title = sysextTags.length + " tag" + (sysextTags.length === 1 ? "" : "s") +
-        " publish a system extension";
-      badges.appendChild(sysextBadge);
-    }
     head.appendChild(badges);
     card.appendChild(head);
 
