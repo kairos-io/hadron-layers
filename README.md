@@ -18,12 +18,14 @@ OCI artifacts:
 ghcr.io/kairos-io/hadron-layers/sysext/<name>:<software-version>-<arch>
 ```
 
-The Git layer is temporarily excluded because its exported OCI layer contains
-hardlink entries that AuroraBoot v0.26.2 cannot extract. Edit the
-`publishing.sysext.skip` list in `publishing.yaml` to change which packages
-skip sysext creation and publication. This file contains repository publishing
-settings so more artifact policies can be added without embedding them in the
-workflow.
+Every layer gets a sysext. Add a package to the `publishing.sysext.skip` list in
+`publishing.yaml` to skip sysext creation and publication for it. This file
+contains repository publishing settings so more artifact policies can be added
+without embedding them in the workflow.
+
+A sysext only merges `/usr/bin`, `/usr/lib`, `/usr/sbin` and `/usr/share`, so a
+layer must not install files under `/usr/libexec`. AuroraBoot warns when it
+finds any.
 
 Use an immutable digest from the releases index when you pull one:
 

@@ -230,7 +230,7 @@ jobs:
           METADATA: ${{ steps.build.outputs.metadata }}
           VERSION: ${{ steps.version.outputs.value }}
           REGISTRY: ghcr.io/kairos-io/hadron-layers
-          AURORABOOT_IMAGE: quay.io/kairos/auroraboot:v0.26.2
+          AURORABOOT_IMAGE: quay.io/kairos/auroraboot:v0.30.0
         run: |
           mkdir -p /tmp/sysext
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
