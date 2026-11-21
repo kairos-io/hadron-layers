@@ -1,5 +1,5 @@
 ---
-name: Hadron toolchain version updates
+name: Hadron version updates
 
 sources:
   hadron:
@@ -9,13 +9,6 @@ sources:
       repository: hadron
 
 targets:
-  hadron_toolchain_bake:
-    name: 'HADRON_TOOLCHAIN_VERSION in docker-bake.hcl updated to {{ source "hadron" }}'
-    kind: hcl
-    spec:
-      file: docker-bake.hcl
-      path: variable.HADRON_TOOLCHAIN_VERSION.default
-    sourceid: hadron
   hadron_bake:
     # HADRON_VERSION is the Hadron base image tag of every layer's test stage.
     # It is the same release tag as the toolchain, so both move together.
