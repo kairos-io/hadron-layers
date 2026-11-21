@@ -9,7 +9,6 @@ on:
     types:
       - completed
   workflow_dispatch:
-
 ## Serialize deploys but never cancel one in-flight — always let a running
 ## deployment finish so GitHub Pages does not receive a half-uploaded artifact.
 concurrency:
