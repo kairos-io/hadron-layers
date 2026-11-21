@@ -275,6 +275,20 @@ fi
 
 echo 'layer status labels are stable, beta or alpha'
 
+# The toolchain image and the base image are the same Hadron release, so the
+# bake file has one version variable for both. A second variable would let a
+# layer be built against one release and tested on another.
+bake_file=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/docker-bake.hcl
+if grep -q '^variable "HADRON_TOOLCHAIN_VERSION"' "$bake_file"; then
+  echo "docker-bake.hcl must not define HADRON_TOOLCHAIN_VERSION; use HADRON_VERSION for the toolchain and the base image" >&2
+  exit 1
+fi
+if grep -E '^\s*HADRON_TOOLCHAIN_VERSION\s*=' "$bake_file" | grep -vE '=\s*(HADRON_VERSION|ZFS_HADRON_VERSION)\s*$' | grep -q .; then
+  echo "docker-bake.hcl must set HADRON_TOOLCHAIN_VERSION from HADRON_VERSION (or ZFS_HADRON_VERSION for zfs)" >&2
+  exit 1
+fi
+echo 'one Hadron version for toolchain and base'
+
 # The ruleset requires layers-ci in the merge queue, so the workflow must run
 # there, and must not rebuild or publish anything: the pull request already
 # built the same content.

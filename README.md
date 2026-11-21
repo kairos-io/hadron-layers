@@ -149,7 +149,7 @@ The `drbd` and `zfs` layers are **out-of-tree kernel modules** and deviate from 
 
 ## Toolchain and base versions
 
-`HADRON_TOOLCHAIN_VERSION` (used by the build stage of every layer that compiles against the toolchain) and `HADRON_VERSION` (used by every layer's test stage) are both defined **once** in [`docker-bake.hcl`](docker-bake.hcl). Updatecli bumps `HADRON_TOOLCHAIN_VERSION` and Renovate bumps `HADRON_VERSION` — no Dockerfile needs touching. All layers pick up the new versions on the next build.
+`HADRON_VERSION` is defined **once** in [`docker-bake.hcl`](docker-bake.hcl) and names the Hadron release for both images: the `hadron-toolchain` image a layer is built from and the `hadron` base image its test stage runs on. They come from the same release, so they must not differ. The bake file hands the value to each Dockerfile as the `HADRON_TOOLCHAIN_VERSION` and `HADRON_VERSION` build arguments. Updatecli bumps it, and no Dockerfile needs touching. All layers pick up the new version on the next build. The `zfs` layer is the one exception, see `ZFS_HADRON_VERSION` in the bake file.
 
 ## Automation
 
@@ -161,7 +161,7 @@ The `drbd` and `zfs` layers are **out-of-tree kernel modules** and deviate from 
 ## Adding a new layer
 
 1. Create a new directory (e.g. `myapp/`) with a `Dockerfile` that follows the build → merge → `FROM scratch AS default` → `ARG HADRON_VERSION` + `FROM ghcr.io/kairos-io/hadron:${HADRON_VERSION} AS test` pattern. The `test` stage must `COPY --from=default / /` and add offline `RUN` steps that exercise the shipped binaries.
-2. Add a target to `docker-bake.hcl` passing `HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION` and `HADRON_VERSION = HADRON_VERSION`, plus OCI labels via `common_labels("myapp", "One-line description", "official")` (the description surfaces on the releases page). The third argument is the support level above: pass `"community"` for a contributed recipe nobody has signed up to maintain, and skip steps 3 and 4.
+2. Add a target to `docker-bake.hcl` passing `HADRON_TOOLCHAIN_VERSION = HADRON_VERSION` and `HADRON_VERSION = HADRON_VERSION`, plus OCI labels via `common_labels("myapp", "One-line description", "official")` (the description surfaces on the releases page). The third argument is the support level above: pass `"community"` for a contributed recipe nobody has signed up to maintain, and skip steps 3 and 4.
 3. Add an updatecli config under `updatecli.d/myapp.yaml` to track upstream releases.
 4. Add `myapp` to the `matrix.config` list in `.github/workflows/autobumper.yml`.
 

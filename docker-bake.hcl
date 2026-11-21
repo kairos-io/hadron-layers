@@ -1,17 +1,14 @@
 # docker-bake.hcl — central build configuration for all hadron layers.
 #
-# HADRON_TOOLCHAIN_VERSION is the single source of truth for the toolchain
-# version used across every layer Dockerfile. Update it here (or let updatecli
-# do it automatically) and all layers will pick up the new version on the next
-# build.
-
-variable "HADRON_TOOLCHAIN_VERSION" {
-  default = "v0.6.6"
-}
-
-# HADRON_VERSION is the tag of the Hadron base image used by every layer's
-# test stage. Renovate tracks this variable via the custom manager in
-# renovate.json and opens PRs when a newer semver tag is published to GHCR.
+# HADRON_VERSION is the single source of truth for the Hadron release every
+# layer is built and tested against. It names both the hadron-toolchain image a
+# layer is built from and the hadron base image its test stage runs on. The two
+# images come from the same Hadron release and carry the same compiler, musl
+# and libraries, so a layer built against one must be tested on the other.
+# Update it here (or let updatecli do it) and every layer picks it up on the
+# next build. The Dockerfiles still take it as two build arguments,
+# HADRON_TOOLCHAIN_VERSION and HADRON_VERSION, which this file sets to the same
+# value.
 variable "HADRON_VERSION" {
   default = "v0.6.6"
 }
@@ -21,9 +18,9 @@ variable "HADRON_VERSION" {
 # release, supports kernels up to 7.2 (META: Linux-Maximum 7.2); Hadron v0.6.2
 # and later ship kernel 7.3.x, which no OpenZFS release supports yet. v0.6.1
 # (kernel 7.2.11) is the newest Hadron release 2.4.4 can be built against.
-# Renovate and updatecli track HADRON_VERSION and HADRON_TOOLCHAIN_VERSION by
-# exact name and leave this one alone. Move it when OpenZFS releases a version
-# that supports the kernel of a newer Hadron.
+# updatecli tracks HADRON_VERSION by exact name and leaves this one alone.
+# Move it when OpenZFS releases a version that supports the kernel of a newer
+# Hadron.
 variable "ZFS_HADRON_VERSION" {
   default = "v0.6.1"
 }
@@ -70,7 +67,7 @@ function "common_labels" {
     "org.opencontainers.image.source"      = REPO_URL
     "org.opencontainers.image.url"         = REPO_URL
     "org.opencontainers.image.vendor"      = "Kairos"
-    "org.opencontainers.image.base.name"   = "ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION}"
+    "org.opencontainers.image.base.name"   = "ghcr.io/kairos-io/hadron-toolchain:${HADRON_VERSION}"
     "io.kairos.hadron.layer.support"       = support
   }
 }
@@ -84,7 +81,7 @@ target "git" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("git", "Git version control system", "official")
@@ -97,7 +94,7 @@ target "gpg" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("gpg", "GnuPG and its runtime libraries", "official")
@@ -110,7 +107,7 @@ target "fwupd" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("fwupd", "Firmware update daemon", "official")
@@ -123,7 +120,7 @@ target "drbd" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
   }
   labels    = common_labels("drbd", "Out-of-tree DRBD 9 kernel module and drbd-utils", "official")
   platforms = PLATFORMS
@@ -151,7 +148,7 @@ target "htop" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("htop", "Interactive process viewer", "official")
@@ -195,7 +192,7 @@ target "containerd-shim-wasmtime" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("containerd-shim-wasmtime", "containerd shim for WebAssembly workloads on wasmtime (runwasi)", "official")
@@ -208,7 +205,7 @@ target "containerd-shim-spin" {
   dockerfile = "Dockerfile"
   target     = "default"
   args = {
-    HADRON_TOOLCHAIN_VERSION = HADRON_TOOLCHAIN_VERSION
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
   }
   labels    = common_labels("containerd-shim-spin", "containerd shim for Spin WebAssembly applications", "official")
