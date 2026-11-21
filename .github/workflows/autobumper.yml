@@ -29,6 +29,7 @@ jobs:
           - containerd-shim-wasmtime
           - containerd-shim-spin
           - golang
+          - auroraboot
           - actions
     steps:
       - name: Install Updatecli
