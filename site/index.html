@@ -116,6 +116,8 @@
   .badge.latest { color: var(--accent); border-color: var(--accent); }
   .badge.support-official { color: var(--accent-2); border-color: var(--accent-2); }
   .badge.support-community { color: var(--text); }
+  .badge.status-beta { color: var(--warn, #d9a441); border-color: var(--warn, #d9a441); }
+  .badge.status-alpha { color: var(--danger, #e5534b); border-color: var(--danger, #e5534b); }
   .card-body { padding: 0 18px 16px; }
   .pull-cmd {
     display: flex;
@@ -486,6 +488,25 @@ extensions:
       ? "Community-contributed recipe, maintained on a best-effort basis"
       : "Maintained by the Kairos maintainers and bumped automatically";
     badges.appendChild(supportBadge);
+    // Stable is the default and needs no badge. Beta and alpha are warnings.
+    if (layer.status === "beta" || layer.status === "alpha") {
+      var statusBadge = document.createElement("span");
+      statusBadge.className = "badge status-" + layer.status;
+      statusBadge.textContent = layer.status;
+      statusBadge.title = "This layer is " + layer.status + ": it may change or break between releases";
+      badges.appendChild(statusBadge);
+    }
+    // "*" or an empty value means any version, so only a real range is shown.
+    [["hadron_compat", "hadron", "Hadron releases this layer works with"],
+     ["kernel_compat", "kernel", "Kernel versions this layer works with"]].forEach(function (c) {
+      var range = layer[c[0]];
+      if (!range || range === "*") return;
+      var compatBadge = document.createElement("span");
+      compatBadge.className = "badge compat";
+      compatBadge.textContent = c[1] + " " + range;
+      compatBadge.title = c[2] + " (semver range)";
+      badges.appendChild(compatBadge);
+    });
     if (layer.latest) {
       var latestBadge = document.createElement("span");
       latestBadge.className = "badge latest";
