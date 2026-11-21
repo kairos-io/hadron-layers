@@ -21,7 +21,11 @@ RUN ./configure ${COMMON_CONFIGURE_ARGS} --build=${TARGET} \
 # git 2.55. It requires cargo which the hadron-toolchain image does not
 # ship. Rust is optional through the git 2.x series and mandatory from
 # git 3.0; drop NO_RUST once the toolchain provides cargo.
-RUN make install prefix=/usr DESTDIR=/output NO_TCLTK=YesPlease NO_GETTEXT=YesPlease NO_RUST=YesPlease
+# gitexecdir moves git's helper programs (git-remote-https, git-upload-pack and
+# the rest) from the default /usr/libexec/git-core to /usr/lib/git-core. A
+# system extension only merges /usr/bin, /usr/lib, /usr/sbin and /usr/share,
+# so under /usr/libexec the helpers would be missing on the node.
+RUN make install prefix=/usr DESTDIR=/output gitexecdir=/usr/lib/git-core NO_TCLTK=YesPlease NO_GETTEXT=YesPlease NO_RUST=YesPlease
 
 # Strip dev artifacts from the install tree so the final layer only ships
 # runtime binaries, libexec helpers, shared libraries, and data files.
@@ -53,6 +57,10 @@ COPY --from=merge /output/ /
 FROM ghcr.io/kairos-io/hadron:${HADRON_VERSION} AS test
 COPY --from=default / /
 RUN git --version
+# The helpers must sit where a system extension merges them, and git must
+# find them there.
+RUN test -x /usr/lib/git-core/git-remote-http && test ! -e /usr/libexec/git-core && \
+    [ "$(git --exec-path)" = /usr/lib/git-core ]
 RUN set -eux; \
     export HOME=/tmp; \
     git config --global user.email test@hadron.local; \

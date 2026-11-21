@@ -13,7 +13,8 @@ skip_layers=$(awk '
   END { print "[" values "]" }
 ' "$settings")
 
-[[ "$skip_layers" == '["git"]' ]]
+# No layer is skipped today. When one is, change this to the list it should be.
+[[ "$skip_layers" == '[]' ]]
 
 settings_output=$(awk '
   /sysext_skip_layers:/ { print; exit }

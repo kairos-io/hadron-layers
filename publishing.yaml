@@ -1,4 +1,4 @@
 publishing:
   sysext:
-    skip:
-      - git
+    # Layers that get no sysext. Empty: every layer gets one.
+    skip: []
