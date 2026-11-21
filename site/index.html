@@ -314,8 +314,7 @@ COPY --from=ghcr.io/kairos-io/hadron-layers/git:latest / /</pre></div>
       <div class="snippet"><pre data-copy>kairos-agent sysext install fwupd
 kairos-agent sysext enable --active --now fwupd
 kairos-agent sysext list</pre></div>
-      <p>Pass <code>--version</code> for an exact version or a semver constraint, or install a
-        digest-pinned artifact directly with the <code>oci://</code> reference each card shows:</p>
+      <p>Pass <code>--version</code> for an exact version or a semver constraint:</p>
       <div class="snippet"><pre data-copy>kairos-agent sysext install --version "&gt;= 2.1, &lt; 3" fwupd</pre></div>
 
       <h3>At install time, from a cloud config</h3>
@@ -563,58 +562,34 @@ extensions:
     pullBar.appendChild(pullCopyBtn);
     body.appendChild(pullBar);
 
-    // System-extension bar: the sysext artifact published alongside the
-    // selected tag, per architecture. Hidden for a tag that has none, which is
-    // what an empty `sysext` object in releases.json means.
+    // System-extension bar: the catalog install command for the selected tag.
+    // The catalog (this page's releases.json) resolves the name, version and
+    // architecture on the node, so the command carries no architecture and no
+    // digest. Hidden for a tag with no sysext, which is what an empty `sysext`
+    // object in releases.json means.
     var sysextBar = document.createElement("div");
     sysextBar.className = "pull-cmd sysext-cmd";
     var sysextLabel = document.createElement("span");
     sysextLabel.className = "label";
     sysextLabel.textContent = "sysext";
-    var archSelect = document.createElement("select");
-    archSelect.className = "version-select";
-    archSelect.style.minWidth = "90px";
-    archSelect.setAttribute("aria-label", "Select architecture");
     var sysextCode = document.createElement("code");
 
-    function sysextFor(tag) {
+    function hasSysext(tag) {
       var found = layer.tags.filter(function (t) { return t.tag === tag; })[0];
-      return (found && found.sysext) || {};
-    }
-    function sysextRef() {
-      var entry = sysextFor(versionSelect.value)[archSelect.value];
-      return entry ? entry.oci : "";
+      return !!(found && found.sysext && Object.keys(found.sysext).length);
     }
     function sysextCommand() {
-      var ref = sysextRef();
-      return ref ? "kairos-agent sysext install oci://" + ref : "";
+      if (!hasSysext(versionSelect.value)) return "";
+      return "kairos-agent sysext install --version " + versionSelect.value + " " + layer.name;
     }
-    // Remembered separately from archSelect.value, which a tag publishing no
-    // sysext at all empties: the choice has to survive passing through one.
-    var chosenArch = "";
     function refreshSysext() {
-      var byArch = sysextFor(versionSelect.value);
-      var arches = Object.keys(byArch).sort();
-      archSelect.innerHTML = "";
-      arches.forEach(function (a) {
-        var opt = document.createElement("option");
-        opt.value = a;
-        opt.textContent = a;
-        archSelect.appendChild(opt);
-      });
-      if (arches.indexOf(chosenArch) !== -1) archSelect.value = chosenArch;
-      sysextBar.style.display = arches.length ? "" : "none";
+      sysextBar.style.display = hasSysext(versionSelect.value) ? "" : "none";
       sysextCode.textContent = sysextCommand();
     }
     var sysextCopyBtn = copyButton("Copy", sysextCommand, null, copyIcon);
-    archSelect.addEventListener("change", function () {
-      chosenArch = archSelect.value;
-      sysextCode.textContent = sysextCommand();
-    });
     versionSelect.addEventListener("change", refreshSysext);
 
     sysextBar.appendChild(sysextLabel);
-    sysextBar.appendChild(archSelect);
     sysextBar.appendChild(sysextCode);
     sysextBar.appendChild(sysextCopyBtn);
     refreshSysext();
