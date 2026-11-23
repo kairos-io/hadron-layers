@@ -46,6 +46,9 @@ jobs:
       - name: Test workflow policy
         run: ./.github/workflows/build_test.sh
 
+      - name: Test the autobumper changelog script
+        run: ./.github/scripts/autobumper-changelog_test.sh
+
       # site/build-data_test.sh stubs both docker and gh, so it runs anywhere
       # jq does. It has never been wired to a workflow, which left the
       # releases.json shape asserted only by whoever remembered to run it.
