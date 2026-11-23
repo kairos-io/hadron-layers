@@ -13,7 +13,6 @@ on:
   # layers-ci check can report. It builds nothing there, see layers-ci below.
   merge_group:
   workflow_dispatch:
-
 # Serialize runs per ref so only one main build runs at a time.
 # Pushes to main queue and run in order (cancel-in-progress: false) to avoid
 # cache races and older images overwriting newer ones. Pull request runs cancel
