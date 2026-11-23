@@ -1,0 +1,27 @@
+---
+name: smartmontools layer version updates
+
+sources:
+  smartmontools:
+    # Upstream names releases and tags RELEASE_7_5, which is not a semver, so
+    # take the newest GitHub release and rewrite the name to 7.5.
+    kind: githubrelease
+    spec:
+      owner: smartmontools
+      repository: smartmontools
+    transformers:
+      - trimprefix: RELEASE_
+      - replacer:
+          from: _
+          to: .
+
+targets:
+  smartmontools_version:
+    name: 'SMARTMONTOOLS_VERSION in smartmontools/Dockerfile updated to {{ source "smartmontools" }}'
+    kind: dockerfile
+    spec:
+      file: smartmontools/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: SMARTMONTOOLS_VERSION
+    sourceid: smartmontools
