@@ -1,0 +1,5 @@
+# Start the guest agent when the host presents its virtio port. Upstream's
+# unit has an empty [Install] section, so nothing else starts it. The tag and
+# SYSTEMD_WANTS make systemd pull in the unit when the port appears, which only
+# happens in a QEMU VM, so the unit never starts on bare metal.
+SUBSYSTEM=="virtio-ports", ATTR{name}=="org.qemu.guest_agent.0", TAG+="systemd", ENV{SYSTEMD_WANTS}="qemu-guest-agent.service"
