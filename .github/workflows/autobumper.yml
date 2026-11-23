@@ -107,7 +107,7 @@ jobs:
           # Check if there are staged changes
           if git diff --cached --quiet; then
             echo "No changes to commit. Checking PR state."
-            PR_INFO=$(gh pr list --head "ci-forks:$BRANCH" --base main --repo kairos-io/hadron-layers --state all --json number,state -q '.[0]')
+            PR_INFO=$(gh pr list --head "$BRANCH" --base main --repo kairos-io/hadron-layers --state all --json number,state -q '.[0]')
             PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number // empty')
             PR_STATE=$(echo "$PR_INFO" | jq -r '.state // empty')
             if [ -n "$PR_NUMBER" ]; then
@@ -135,7 +135,7 @@ jobs:
           git push origin "$BRANCH" --force
 
           # Check if PR already exists (open or closed)
-          PR_INFO=$(gh pr list --head "ci-forks:$BRANCH" --base main --repo kairos-io/hadron-layers --state all --json number,state -q '.[0]')
+          PR_INFO=$(gh pr list --head "$BRANCH" --base main --repo kairos-io/hadron-layers --state all --json number,state -q '.[0]')
           PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number // empty')
           PR_STATE=$(echo "$PR_INFO" | jq -r '.state // empty')
           if [ -n "$PR_NUMBER" ]; then
