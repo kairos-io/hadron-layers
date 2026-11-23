@@ -495,17 +495,11 @@ extensions:
       statusBadge.title = "This layer is " + layer.status + ": it may change or break between releases";
       badges.appendChild(statusBadge);
     }
-    // "*" or an empty value means any version, so only a real range is shown.
-    [["hadron_compat", "hadron", "Hadron version", "Hadron releases this layer works with"],
-     ["kernel_compat", "kernel", "Kernel version", "Kernel versions this layer works with"]].forEach(function (c) {
-      var range = layer[c[0]];
-      if (!range || range === "*") return;
-      var compatBadge = document.createElement("span");
-      compatBadge.className = "badge compat-" + c[1];
-      compatBadge.textContent = c[2] + " " + range;
-      compatBadge.title = c[3] + " (semver range)";
-      badges.appendChild(compatBadge);
-    });
+    // Compat badges describe the selected tag and are filled in below, once
+    // the version selector exists.
+    var compatBadges = document.createElement("span");
+    compatBadges.style.display = "contents";
+    badges.appendChild(compatBadges);
     var tagCountBadge = document.createElement("span");
     tagCountBadge.className = "badge";
     tagCountBadge.textContent = layer.tags.length + " tag" + (layer.tags.length === 1 ? "" : "s");
@@ -552,8 +546,25 @@ extensions:
         ? "docker pull " + currentImageRef()
         : layer.image + " (no published tags)";
     }
-    versionSelect.addEventListener("change", function () { refreshPull(); });
+    // "*", an empty value or no field (an index generated before compat was
+    // per tag) means any version, so only a real range is shown.
+    function refreshCompat() {
+      var found = layer.tags.filter(function (t) { return t.tag === versionSelect.value; })[0] || {};
+      compatBadges.textContent = "";
+      [["hadron_compat", "hadron", "Hadron version", "Hadron releases this tag works with"],
+       ["kernel_compat", "kernel", "Kernel version", "Kernel versions this tag works with"]].forEach(function (c) {
+        var range = found[c[0]];
+        if (!range || range === "*") return;
+        var compatBadge = document.createElement("span");
+        compatBadge.className = "badge compat-" + c[1];
+        compatBadge.textContent = c[2] + " " + range;
+        compatBadge.title = c[3] + " (semver range)";
+        compatBadges.appendChild(compatBadge);
+      });
+    }
+    versionSelect.addEventListener("change", function () { refreshPull(); refreshCompat(); });
     refreshPull();
+    refreshCompat();
 
     pullBar.appendChild(versionSelect);
     pullBar.appendChild(pullCode);
