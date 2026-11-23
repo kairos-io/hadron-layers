@@ -131,8 +131,12 @@ jobs:
           # Commit and push changes
           git config user.name "ci-robbot"
           git config user.email "robot@c3os.io"
-          git commit -s -m "chore(${{ matrix.config }}): automatic dependency version bumps"
+          export UPDATECLI_MANIFEST="updatecli.d/${{ matrix.config }}.yaml"
+          ruby .github/scripts/autobumper-changelog.rb
+
+          git commit -s -F /tmp/commit_msg.txt
           git push origin "$BRANCH" --force
+          PR_TITLE=$(cat /tmp/pr_title.txt)
 
           # Check if PR already exists (open or closed)
           PR_INFO=$(gh pr list --head "$BRANCH" --base main --repo kairos-io/hadron-layers --state all --json number,state -q '.[0]')
@@ -145,22 +149,25 @@ jobs:
                 echo "PR #$PR_NUMBER is closed and not merged. Attempting to reopen."
                 if ! gh pr reopen "$PR_NUMBER" --repo kairos-io/hadron-layers; then
                   echo "Failed to reopen PR. Creating a new one."
-                  gh pr create --title "chore(${{ matrix.config }}): automatic dependency version bumps" \
-                    --body "Automatic dependency version bumps for ${{ matrix.config }}" \
+                  gh pr create --title "$PR_TITLE" \
+                    --body-file /tmp/pr_body.md \
                     --head "ci-forks:$BRANCH" \
                     --base main \
                     --repo kairos-io/hadron-layers
+                else
+                  gh pr edit "$PR_NUMBER" --title "$PR_TITLE" --body-file /tmp/pr_body.md --repo kairos-io/hadron-layers
                 fi
               else
                 echo "PR #$PR_NUMBER is merged. Nothing to do."
               fi
             else
-              echo "PR #$PR_NUMBER already exists and is open. Nothing to do."
+              echo "PR #$PR_NUMBER already exists and is open. Updating title and body."
+              gh pr edit "$PR_NUMBER" --title "$PR_TITLE" --body-file /tmp/pr_body.md --repo kairos-io/hadron-layers
             fi
           else
             echo "No PR found. Creating a new one."
-            gh pr create --title "chore(${{ matrix.config }}): automatic dependency version bumps" \
-              --body "Automatic dependency version bumps for ${{ matrix.config }}" \
+            gh pr create --title "$PR_TITLE" \
+              --body-file /tmp/pr_body.md \
               --head "ci-forks:$BRANCH" \
               --base main \
               --repo kairos-io/hadron-layers

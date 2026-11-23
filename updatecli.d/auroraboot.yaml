@@ -15,6 +15,10 @@ sources:
         kind: regex/semver
         regex: '^v([0-9]+\.[0-9]+\.[0-9]+)$'
         pattern: "*"
+    changelog:
+      forge: github
+      owner: kairos-io
+      repository: AuroraBoot
 
 targets:
   build_workflow:
