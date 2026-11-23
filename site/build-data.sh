@@ -70,6 +70,8 @@ kernel_series_of() {
   printf '%s' "${KSERIES_CACHE[$ver]}"
 }
 
+BACKFILL="${BACKFILL:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/compat-backfill.json}"
+
 ## Add hadron_compat and kernel_compat to every tag of an image.
 compat_per_tag() {
   local image="$1" tags="$2" tag labels base ver hc kc out='[]'
@@ -79,6 +81,11 @@ compat_per_tag() {
     [[ -n "$labels" ]] || labels='{}'
     hc=$(jq -r '.["io.kairos.hadron.layer.hadron-compat"] // ""' <<<"$labels")
     kc=$(jq -r '.["io.kairos.hadron.layer.kernel-compat"] // ""' <<<"$labels")
+    ## Tags published before the labels existed: the kernel series measured
+    ## from the image (its /usr/lib/modules dir) and kept in compat-backfill.json.
+    if [[ -z "$kc" && -f "$BACKFILL" ]]; then
+      kc=$(jq -r --arg l "${image##*/}" --arg t "$tag" '.[$l][$t] // ""' "$BACKFILL")
+    fi
     if [[ -z "$kc" ]]; then
       base=$(jq -r '.["org.opencontainers.image.base.name"] // ""' <<<"$labels")
       ver="${base##*:}"

@@ -53,7 +53,9 @@ EOF
 chmod +x "$test_dir/bin/docker" "$test_dir/bin/gh" "$test_dir/bin/curl"
 
 output="$test_dir/releases.json"
-PATH="$test_dir/bin:$PATH" REPO=kairos-io/hadron-layers \
+## 2.54.0 has no label: the backfill file wins over the Dockerfile lookup.
+echo '{"git":{"2.54.0":"7.9.x"}}' > "$test_dir/backfill.json"
+BACKFILL="$test_dir/backfill.json" PATH="$test_dir/bin:$PATH" REPO=kairos-io/hadron-layers \
   "$repo_root/site/build-data.sh" "$output"
 
 jq -e '
@@ -80,10 +82,10 @@ jq -e '(.layers[] | select(.name == "git") | [.status, .hadron_compat, .kernel_c
 jq -e '(.layers[] | select(.name == "gpg") | [.status, .hadron_compat, .kernel_compat]) == ["stable", "*", "*"]' "$output" >/dev/null
 
 ## Compat is per tag: a tag with the label keeps it, an older tag without one
-## gets the kernel series of the Hadron release its toolchain base names, and a
+## gets the backfilled series, else the kernel series of the Hadron release its toolchain base names, and a
 ## tag with neither makes no claim. The layer-level value is the latest tag's.
 jq -e '(.layers[] | select(.name == "git") | .tags[] | select(.tag == "2.55.0") | .kernel_compat) == "7.3.x"' "$output" >/dev/null
-jq -e '(.layers[] | select(.name == "git") | .tags[] | select(.tag == "2.54.0") | .kernel_compat) == "7.2.x"' "$output" >/dev/null
+jq -e '(.layers[] | select(.name == "git") | .tags[] | select(.tag == "2.54.0") | .kernel_compat) == "7.9.x"' "$output" >/dev/null
 jq -e '(.layers[] | select(.name == "git") | .kernel_compat) == "7.3.x"' "$output" >/dev/null
 jq -e '(.layers[] | select(.name == "gpg") | .tags[0].kernel_compat) == "*"' "$output" >/dev/null
 
