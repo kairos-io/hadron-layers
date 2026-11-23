@@ -27,7 +27,7 @@
 ##         "kernel_compat": "*",
 ##         "latest": "2.52.0",
 ##         "tags": [
-##           {"tag": "2.52.0", "digest": "sha256:...", "created": "..."}
+##           {"tag": "2.52.0", "digest": "sha256:...", "created": "...", "hadron_compat": "*", "kernel_compat": "*"}
 ##         ]
 ##       }
 ##     ]
@@ -57,6 +57,40 @@ fi
 
 ## Toolchain version is taken from any target's resolved HADRON_TOOLCHAIN_VERSION arg.
 toolchain=$(jq -r 'first(.target[] | .args.HADRON_TOOLCHAIN_VERSION // empty) // ""' <<<"$bake")
+
+## Kernel series ("7.3.x") of a Hadron release, read from the ARG KERNEL_VERSION
+## in that release's Dockerfile. Cached per release; empty when unknown.
+declare -A KSERIES_CACHE=()
+kernel_series_of() {
+  local ver="$1"
+  if [[ -z "${KSERIES_CACHE[$ver]+x}" ]]; then
+    KSERIES_CACHE[$ver]=$(curl -fsSL "https://raw.githubusercontent.com/kairos-io/hadron/${ver}/Dockerfile" 2>/dev/null \
+      | sed -n 's/^ARG KERNEL_VERSION=\([0-9]*\.[0-9]*\)\..*/\1.x/p' | head -1 || true)
+  fi
+  printf '%s' "${KSERIES_CACHE[$ver]}"
+}
+
+## Add hadron_compat and kernel_compat to every tag of an image.
+compat_per_tag() {
+  local image="$1" tags="$2" tag labels base ver hc kc out='[]'
+  while IFS= read -r tag; do
+    labels=$(docker buildx imagetools inspect "${image}:${tag}" --format '{{json .Image}}' 2>/dev/null \
+      | jq -c 'if type == "object" then ([.[]? | .config.Labels? // empty] | first) // {} else {} end' 2>/dev/null) || labels='{}'
+    [[ -n "$labels" ]] || labels='{}'
+    hc=$(jq -r '.["io.kairos.hadron.layer.hadron-compat"] // ""' <<<"$labels")
+    kc=$(jq -r '.["io.kairos.hadron.layer.kernel-compat"] // ""' <<<"$labels")
+    if [[ -z "$kc" ]]; then
+      base=$(jq -r '.["org.opencontainers.image.base.name"] // ""' <<<"$labels")
+      ver="${base##*:}"
+      [[ "$ver" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] && kc=$(kernel_series_of "$ver")
+    fi
+    out=$(jq --arg tag "$tag" --arg hc "${hc:-*}" --arg kc "${kc:-*}" \
+      '. += [{key: $tag, hc: $hc, kc: $kc}]' <<<"$out")
+  done < <(jq -r '.[].tag' <<<"$tags")
+  jq --argjson c "$out" '
+    map(. as $t | ($c | map(select(.key == $t.tag)) | first) as $m
+      | . + {hadron_compat: ($m.hc // "*"), kernel_compat: ($m.kc // "*")})' <<<"$tags"
+}
 
 layers='[]'
 for target in $(jq -r '.target | keys[]' <<<"$bake"); do
@@ -149,6 +183,13 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
           ({}; .[$artifact.arch] = {oci: $artifact.oci})))
   ' <<<"$tags")
 
+  ## Compat is a property of each published tag, not of the layer: drbd 9.3.4
+  ## was built for one kernel series and a later tag for another. Read the
+  ## labels from the published image itself. A tag built before the labels
+  ## existed has none, so derive the kernel series from the Hadron release its
+  ## toolchain base image names; if that fails the tag makes no claim ("*").
+  tags=$(compat_per_tag "$image" "$tags")
+
   ## "Latest" is the highest-semver tag if any parse as semver, else the newest by date.
   latest=$(jq -r '
       (map(select(.tag | test("^[0-9]+(\\.[0-9]+)*$")))
@@ -157,6 +198,14 @@ for target in $(jq -r '.target | keys[]' <<<"$bake"); do
         | .[0].tag)
       // (.[0].tag // "")
     ' <<<"$tags")
+
+  ## The layer-level fields describe the latest tag; the bake labels are only
+  ## the fallback for a layer with no published tag yet.
+  latest_compat=$(jq -c --arg l "$latest" 'map(select(.tag == $l)) | first // empty | [.hadron_compat, .kernel_compat]' <<<"$tags")
+  if [[ -n "$latest_compat" ]]; then
+    hadron_compat=$(jq -r '.[0]' <<<"$latest_compat")
+    kernel_compat=$(jq -r '.[1]' <<<"$latest_compat")
+  fi
 
   layers=$(jq \
     --arg name "$target" \
