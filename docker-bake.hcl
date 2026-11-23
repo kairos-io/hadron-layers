@@ -10,7 +10,7 @@
 # HADRON_TOOLCHAIN_VERSION and HADRON_VERSION, which this file sets to the same
 # value.
 variable "HADRON_VERSION" {
-  default = "v0.6.6"
+  default = "v0.6.7"
 }
 
 # ZFS_HADRON_VERSION pins the zfs layer to the Hadron release whose kernel it
