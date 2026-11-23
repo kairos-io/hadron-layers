@@ -26,6 +26,7 @@ jobs:
           - zfs
           - tailscale
           - htop
+          - smartmontools
           - containerd-shim-wasmtime
           - containerd-shim-spin
           - golang

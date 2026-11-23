@@ -80,6 +80,7 @@ the raw image with your own keys, which is the only option under Trusted Boot.
 | `zfs` | `ghcr.io/kairos-io/hadron-layers/zfs` | official | OpenZFS kernel module and userspace tools |
 | `tailscale` | `ghcr.io/kairos-io/hadron-layers/tailscale` | official | Tailscale node agent (tailscaled) and CLI |
 | `htop` | `ghcr.io/kairos-io/hadron-layers/htop` | official | Interactive process viewer |
+| `smartmontools` | `ghcr.io/kairos-io/hadron-layers/smartmontools` | official | Disk health tools: smartctl and the smartd daemon |
 | `containerd-shim-wasmtime` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-wasmtime` | official | containerd shim for WebAssembly workloads on wasmtime (runwasi) |
 | `containerd-shim-spin` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-spin` | official | containerd shim for Spin WebAssembly applications |
 
@@ -156,7 +157,7 @@ The `drbd` and `zfs` layers are **out-of-tree kernel modules** and deviate from 
 ## Automation
 
 - **Build & publish** – `.github/workflows/build.yml` runs on every push to `main` via `docker buildx bake`, building multi-arch images (`linux/amd64`, `linux/arm64`) and pushing to GHCR.
-- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, zfs, tailscale, htop). Renovate handles action pins and other dependencies.
+- **Version bumping** – `.github/workflows/autobumper.yml` runs daily, using [updatecli](https://www.updatecli.io/) to open PRs for new upstream releases (toolchain, git, gpg, fwupd, drbd, zfs, tailscale, htop, smartmontools). Renovate handles action pins and other dependencies.
 - **Bot pull requests** – the pull requests the autobumper opens are reviewed and merged like any other pull request. There is no workflow that approves or merges them.
 - **Releases page** – `.github/workflows/pages.yml` regenerates [`releases.json`](https://kairos-io.github.io/hadron-layers/releases.json) from the GHCR package versions API and deploys `site/index.html` to GitHub Pages after every successful main/tag build.
 

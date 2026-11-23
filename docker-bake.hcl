@@ -73,7 +73,7 @@ function "common_labels" {
 }
 
 group "default" {
-  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop", "containerd-shim-wasmtime", "containerd-shim-spin"]
+  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop", "smartmontools", "containerd-shim-wasmtime", "containerd-shim-spin"]
 }
 
 target "git" {
@@ -160,6 +160,19 @@ target "htop" {
   labels    = common_labels("htop", "Interactive process viewer", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/htop:${TAG}"]
+}
+
+target "smartmontools" {
+  context    = "smartmontools"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels    = common_labels("smartmontools", "Disk health tools: smartctl and the smartd daemon", "official")
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/smartmontools:${TAG}"]
 }
 
 # Tailscale builds from the upstream golang image rather than the toolchain
