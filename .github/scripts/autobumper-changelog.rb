@@ -56,18 +56,27 @@ def parse_bumps(diff_text, hcl_vars = {})
   added = {}
   order = []
   file = nil
+  current_var = nil
 
   diff_text.each_line do |line|
     if line.start_with?("+++ ")
       file = line[4..].strip.sub(%r{\Ab/}, "")
+      current_var = nil
       next
     end
     next if line.start_with?("--- ")
 
+    current_var = nil if line.start_with?("@@")
+    # The `variable "NAME" {` line is context or a change just above the
+    # `default` line, so a file with several bumped variables stays apart.
+    if (declared = line[1..].to_s.match(/\Avariable\s+"([^"]+)"/))
+      current_var = declared[1]
+    end
+
     sign = line[0]
     next unless sign == "-" || sign == "+"
 
-    name, version = bump_line(line[1..].strip, file, hcl_vars)
+    name, version = bump_line(line[1..].strip, file, hcl_vars, current_var)
     next unless name
 
     if sign == "-"
@@ -92,16 +101,26 @@ def parse_bumps(diff_text, hcl_vars = {})
 end
 
 # Name and version a single changed line carries, or nil.
-def bump_line(text, file, hcl_vars)
+def bump_line(text, file, hcl_vars, current_var = nil)
   if (match = text.match(/\AARG\s+([A-Z0-9_]+)=(.+)\z/))
     [match[1], match[2]]
   elsif (match = text.match(/\A(?:-\s+)?uses:\s*([\w.-]+\/[\w.-]+(?:\/[\w.\/-]+)?)@(\S+)/))
     [match[1], match[2]]
   elsif (match = text.match(/\A([A-Z][A-Z0-9_]*_IMAGE):\s*\S+:([^\s:]+)\z/))
     [match[1], match[2]]
-  elsif (match = text.match(/\Adefault\s*=\s*"([^"]+)"\z/)) && hcl_vars[file]
-    [hcl_vars[file], match[1]]
+  elsif (match = text.match(/\Adefault\s*=\s*"([^"]+)"\z/)) && (var = hcl_variable(hcl_vars[file], current_var))
+    [var, match[1]]
   end
+end
+
+# The variable a `default = "..."` line belongs to: the one just declared when
+# the manifest names it, or the file's only variable when no declaration is in
+# the diff.
+def hcl_variable(vars, current_var)
+  vars = Array(vars)
+  return current_var if current_var && vars.include?(current_var)
+
+  vars.first if current_var.nil? && vars.length == 1
 end
 
 # Short display name of a bump: GIT_VERSION -> git, LIBGPG_ERROR_VERSION ->
@@ -429,7 +448,7 @@ targets.each do |target_name, target|
   matcher = spec.dig("instruction", "matcher")
   if matcher.to_s.empty? && target["kind"] == "hcl" && spec["path"].to_s.match?(/\Avariable\.[^.]+\.default\z/)
     matcher = spec["path"].split(".")[1]
-    hcl_vars[spec["file"]] = matcher
+    (hcl_vars[spec["file"]] ||= []) << matcher
   end
   next if matcher.to_s.empty?
 
@@ -444,7 +463,7 @@ end
 # source when it has exactly one.
 only_sourceid = sources.length == 1 ? sources.keys.first : nil
 
-bumps = parse_bumps(`git diff --cached -U0`, hcl_vars).map do |bump|
+bumps = parse_bumps(`git diff --cached -U1`, hcl_vars).map do |bump|
   target = target_lookup[bump["matcher"]] || { "sourceid" => only_sourceid }
   sourceid = target["sourceid"]
   source = sources[sourceid] || {}

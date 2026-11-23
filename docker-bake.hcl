@@ -13,6 +13,14 @@ variable "HADRON_VERSION" {
   default = "v0.6.7"
 }
 
+# HADRON_KERNEL_SERIES is the kernel series the HADRON_VERSION release ships
+# (v0.6.7 ships kernel 7.3.5). The kernel module layers (drbd) put it in their
+# kernel-compat label. updatecli moves it together with HADRON_VERSION, from
+# the KERNEL_VERSION of the Hadron release (updatecli.d/toolchain.yaml).
+variable "HADRON_KERNEL_SERIES" {
+  default = "7.3.x"
+}
+
 # ZFS_HADRON_VERSION pins the zfs layer to the Hadron release whose kernel it
 # is built against, apart from HADRON_VERSION. OpenZFS 2.4.4, the newest
 # release, supports kernels up to 7.2 (META: Linux-Maximum 7.2); Hadron v0.6.2
@@ -23,6 +31,13 @@ variable "HADRON_VERSION" {
 # Hadron.
 variable "ZFS_HADRON_VERSION" {
   default = "v0.6.1"
+}
+
+# ZFS_KERNEL_SERIES is the kernel series ZFS_HADRON_VERSION ships (7.2.11 for
+# v0.6.1). updatecli leaves it alone like ZFS_HADRON_VERSION, so move the two
+# together by hand.
+variable "ZFS_KERNEL_SERIES" {
+  default = "7.2.x"
 }
 
 variable "REGISTRY" {
@@ -122,7 +137,14 @@ target "drbd" {
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
   }
-  labels    = common_labels("drbd", "Out-of-tree DRBD 9 kernel module and drbd-utils", "official")
+  labels = merge(
+    common_labels("drbd", "Out-of-tree DRBD 9 kernel module and drbd-utils", "official"),
+    {
+      # The module is built for the kernel of the toolchain image and only
+      # loads on a Hadron that ships a kernel of the same series.
+      "io.kairos.hadron.layer.kernel-compat" = HADRON_KERNEL_SERIES
+    },
+  )
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/drbd:${TAG}"]
 }
@@ -139,10 +161,9 @@ target "zfs" {
     common_labels("zfs", "OpenZFS kernel module and userspace tools", "official"),
     {
       "org.opencontainers.image.base.name" = "ghcr.io/kairos-io/hadron-toolchain:${ZFS_HADRON_VERSION}"
-      # The module is built for the kernel of this one Hadron release and only
-      # loads on a Hadron that ships the same kernel. Derived from the pin, so
-      # moving ZFS_HADRON_VERSION moves the label with it.
-      "io.kairos.hadron.layer.hadron-compat" = "==${trimprefix(ZFS_HADRON_VERSION, "v")}"
+      # The module is built for the kernel of the toolchain image and only
+      # loads on a Hadron that ships a kernel of the same series.
+      "io.kairos.hadron.layer.kernel-compat" = ZFS_KERNEL_SERIES
     },
   )
   platforms = PLATFORMS

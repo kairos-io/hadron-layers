@@ -8,6 +8,18 @@ sources:
       owner: kairos-io
       repository: hadron
 
+  kernel_series:
+    # The kernel series of that Hadron release, read from the KERNEL_VERSION
+    # build argument of its Dockerfile (7.3.5 gives 7.3.x). The kernel module
+    # layers label themselves with it, so it moves with HADRON_VERSION.
+    kind: shell
+    dependson:
+      - source#hadron
+    spec:
+      command: >-
+        sh -c 'curl -fsSL "https://raw.githubusercontent.com/kairos-io/hadron/{{ source "hadron" }}/Dockerfile"
+        | sed -n "s/^ARG KERNEL_VERSION=\([0-9]*\.[0-9]*\)\..*/\1.x/p" | head -1 | grep .'
+
 targets:
   hadron_bake:
     # HADRON_VERSION is the Hadron base image tag of every layer's test stage.
@@ -19,3 +31,11 @@ targets:
       file: docker-bake.hcl
       path: variable.HADRON_VERSION.default
     sourceid: hadron
+
+  kernel_series_bake:
+    name: 'HADRON_KERNEL_SERIES in docker-bake.hcl updated to {{ source "kernel_series" }}'
+    kind: hcl
+    spec:
+      file: docker-bake.hcl
+      path: variable.HADRON_KERNEL_SERIES.default
+    sourceid: kernel_series
