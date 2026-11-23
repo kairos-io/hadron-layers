@@ -73,7 +73,7 @@ function "common_labels" {
 }
 
 group "default" {
-  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop", "smartmontools", "containerd-shim-wasmtime", "containerd-shim-spin"]
+  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop", "smartmontools", "qemu-guest-agent", "containerd-shim-wasmtime", "containerd-shim-spin"]
 }
 
 target "git" {
@@ -173,6 +173,19 @@ target "smartmontools" {
   labels    = common_labels("smartmontools", "Disk health tools: smartctl and the smartd daemon", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/smartmontools:${TAG}"]
+}
+
+target "qemu-guest-agent" {
+  context    = "qemu-guest-agent"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels    = common_labels("qemu-guest-agent", "QEMU guest agent (qemu-ga) for virtual machines", "official")
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/qemu-guest-agent:${TAG}"]
 }
 
 # Tailscale builds from the upstream golang image rather than the toolchain

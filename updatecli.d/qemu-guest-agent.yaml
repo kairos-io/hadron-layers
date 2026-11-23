@@ -1,0 +1,28 @@
+---
+name: qemu-guest-agent layer version updates
+
+# The layer follows the QEMU version Hadron pins for its own guest agent
+# (QEMU_AGENT_VERSION in kairos-io/hadron's Dockerfile), not the newest QEMU
+# release. Only versions Hadron publishes to its source cache
+# (ghcr.io/kairos-io/hadron-sources) can be built, and Hadron decides those.
+# GLIB_VERSION, PCRE2_VERSION and LIBFFI_VERSION are not tracked here for the
+# same reason.
+
+sources:
+  qemu:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG QEMU_AGENT_VERSION=(.*)$'
+      replacepattern: '$1'
+
+targets:
+  qemu_version:
+    name: 'QEMU_AGENT_VERSION in qemu-guest-agent/Dockerfile updated to {{ source "qemu" }}'
+    kind: dockerfile
+    spec:
+      file: qemu-guest-agent/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: QEMU_AGENT_VERSION
+    sourceid: qemu

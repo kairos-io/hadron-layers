@@ -27,6 +27,7 @@ jobs:
           - tailscale
           - htop
           - smartmontools
+          - qemu-guest-agent
           - containerd-shim-wasmtime
           - containerd-shim-spin
           - golang
