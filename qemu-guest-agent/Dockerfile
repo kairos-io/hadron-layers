@@ -87,16 +87,16 @@ RUN install -Dm755 build/qga/qemu-ga /output/usr/bin/qemu-ga
 RUN install -Dm644 contrib/systemd/qemu-guest-agent.service \
       /output/usr/lib/systemd/system/qemu-guest-agent.service
 
-# The unit is enabled statically from /usr (the same thing a vendor preset
-# does) because a system extension cannot create the
-# /etc/systemd/system/multi-user.target.wants symlink that `systemctl enable`
-# would. The unit only starts when the org.qemu.guest_agent.0 virtio port
-# exists, so it stays inactive outside a QEMU VM.
-RUN mkdir -p /output/usr/lib/systemd/system/multi-user.target.wants && \
-    ln -sf ../qemu-guest-agent.service \
-      /output/usr/lib/systemd/system/multi-user.target.wants/qemu-guest-agent.service
+# Upstream's unit has an empty [Install] section, so nothing starts it, and its
+# BindTo= is the old spelling of BindsTo=. Use the current name. The unit is
+# started by the udev rule in files/, which pulls it in when the virtio port
+# org.qemu.guest_agent.0 appears. That port exists only in a QEMU VM, so the
+# unit stays inactive on bare metal. The rule lives under /usr, so this works as
+# a system extension, which cannot enable a unit under /etc.
+RUN sed -i 's/^BindTo=/BindsTo=/' /output/usr/lib/systemd/system/qemu-guest-agent.service
+COPY files/ /output/
 
-# Final layer: the qemu-ga binary and its systemd unit. Use as a layer on top
+# Final layer: the qemu-ga binary, its systemd unit and the udev rule that starts it. Use as a layer on top
 # of Hadron:
 #   FROM ghcr.io/kairos-io/hadron:VERSION
 #   COPY --from=ghcr.io/kairos-io/hadron-layers/qemu-guest-agent:TAG / /
@@ -122,7 +122,12 @@ RUN set -eux; \
     [ -z "$libs" ]
 # The binary must be the guest agent only, with no TCG or system emulator.
 RUN qemu-ga --help | grep -q 'QEMU Guest Agent'
-# The unit is enabled from /usr, and `test -f` follows the symlink, so it also
-# proves the link target resolves. It does not need anything in /etc.
-RUN test -f /usr/lib/systemd/system/multi-user.target.wants/qemu-guest-agent.service
+# The unit must bind to the virtio port device, and the udev rule that starts
+# it must be valid. Nothing may enable the unit statically, or it would start
+# on bare metal and fail there.
+RUN grep -q '^BindsTo=dev-virtio\\x2dports-org.qemu.guest_agent.0.device' /usr/lib/systemd/system/qemu-guest-agent.service
+RUN grep -q '^After=dev-virtio\\x2dports-org.qemu.guest_agent.0.device' /usr/lib/systemd/system/qemu-guest-agent.service
 RUN grep -q '^ExecStart=.*/usr/bin/qemu-ga' /usr/lib/systemd/system/qemu-guest-agent.service
+RUN ! test -e /usr/lib/systemd/system/multi-user.target.wants/qemu-guest-agent.service
+RUN grep -q 'SYSTEMD_WANTS}="qemu-guest-agent.service"' /usr/lib/udev/rules.d/99-qemu-guest-agent.rules
+RUN udevadm verify /usr/lib/udev/rules.d/99-qemu-guest-agent.rules
