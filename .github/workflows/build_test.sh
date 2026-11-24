@@ -184,6 +184,9 @@ echo 'layers-ci gate job present'
 autobumper="$(dirname "${BASH_SOURCE[0]}")/autobumper.yml"
 
 support_per_target=$(awk '
+  # A target whose name starts with _ is shared settings for the layers to
+  # inherit, not a layer.
+  /^target "_/ { target = ""; next }
   /^target "/ {
     if (match($0, /"[^"]+"/)) target = substr($0, RSTART + 1, RLENGTH - 2)
     support = ""
@@ -307,3 +310,28 @@ awk '
   exit 1
 }
 echo 'merge queue runs the gate only'
+
+# The Dockerfiles leave HADRON_TOOLCHAIN_VERSION and HADRON_VERSION without a
+# default so docker-bake.hcl is the only pin, and the _layer target skips the
+# BuildKit lint check that flags exactly that (InvalidDefaultArgInFrom). A
+# layer target that does not inherit _layer warns on every build again, so
+# every layer must inherit it.
+missing_inherits=$(awk '
+  /^target "_/ { target = ""; next }
+  /^target "/ {
+    if (match($0, /"[^"]+"/)) target = substr($0, RSTART + 1, RLENGTH - 2)
+    inherits = 0
+    next
+  }
+  target != "" && /^[[:space:]]*inherits[[:space:]]*=/ && /"_layer"/ { inherits = 1 }
+  /^}/ && target != "" { if (!inherits) print target; target = "" }
+' "$bake_file")
+if [[ -n "$missing_inherits" ]]; then
+  echo "docker-bake.hcl targets that do not inherit _layer: $missing_inherits. Add inherits = [\"_layer\"] so the build does not warn InvalidDefaultArgInFrom." >&2
+  exit 1
+fi
+if ! grep -q 'BUILDKIT_DOCKERFILE_CHECK = "skip=InvalidDefaultArgInFrom"' "$bake_file"; then
+  echo "the _layer target in docker-bake.hcl must skip only InvalidDefaultArgInFrom, so every other BuildKit check still runs" >&2
+  exit 1
+fi
+echo 'every layer target inherits _layer'

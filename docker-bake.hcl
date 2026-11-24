@@ -59,6 +59,21 @@ variable "PLATFORMS" {
   default = ["linux/amd64", "linux/arm64"]
 }
 
+# _layer holds what every layer target shares and is not itself a layer: each
+# target below inherits it, and build_test.sh fails if one does not.
+#
+# The Dockerfiles declare HADRON_TOOLCHAIN_VERSION and HADRON_VERSION without a
+# default on purpose, so this file stays the only place the Hadron release is
+# pinned. BuildKit lints a Dockerfile with only its in-file defaults, sees
+# `FROM ghcr.io/kairos-io/hadron-toolchain:` with an empty tag and warns
+# InvalidDefaultArgInFrom on every build, although the args set here always
+# fill the tag in. Skip that one check; every other check still runs.
+target "_layer" {
+  args = {
+    BUILDKIT_DOCKERFILE_CHECK = "skip=InvalidDefaultArgInFrom"
+  }
+}
+
 # common_labels returns the OCI image labels shared by every layer. The
 # per-layer title and description are merged in at the target level.
 #
@@ -95,6 +110,7 @@ target "git" {
   context    = "git"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
@@ -108,6 +124,7 @@ target "gpg" {
   context    = "gpg"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
@@ -121,6 +138,7 @@ target "fwupd" {
   context    = "fwupd"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
@@ -134,6 +152,7 @@ target "drbd" {
   context    = "drbd"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
   }
@@ -153,6 +172,7 @@ target "zfs" {
   context    = "zfs"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = ZFS_HADRON_VERSION
     HADRON_VERSION           = ZFS_HADRON_VERSION
@@ -174,6 +194,7 @@ target "htop" {
   context    = "htop"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
@@ -187,6 +208,7 @@ target "smartmontools" {
   context    = "smartmontools"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
@@ -200,6 +222,7 @@ target "qemu-guest-agent" {
   context    = "qemu-guest-agent"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
@@ -215,6 +238,7 @@ target "tailscale" {
   context    = "tailscale"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_VERSION = HADRON_VERSION
   }
@@ -244,6 +268,7 @@ target "containerd-shim-wasmtime" {
   context    = "containerd-shim-wasmtime"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
@@ -257,6 +282,7 @@ target "containerd-shim-spin" {
   context    = "containerd-shim-spin"
   dockerfile = "Dockerfile"
   target     = "default"
+  inherits   = ["_layer"]
   args = {
     HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
     HADRON_VERSION           = HADRON_VERSION
