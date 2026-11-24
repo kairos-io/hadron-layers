@@ -12,9 +12,28 @@ on:
   # The merge queue runs this workflow on a temporary branch so the required
   # layers-ci check can report. It builds nothing there, see layers-ci below.
   merge_group:
+  # Build main on a schedule as well as on push, three times a week. A merge
+  # only publishes if it starts a push run, and a merge made with the
+  # GITHUB_TOKEN starts none: GitHub starts no workflow run for a GITHUB_TOKEN
+  # event. That is how the autoapprove.yml auto-merges reached main and left
+  # every bumped layer unpublished until somebody merged a pull request by hand
+  # (kairos-io/kairos#5406). autoapprove.yml is gone (#140) and a merge queue
+  # merge does start a push run, but a push run that failed or was cancelled
+  # still leaves main unpublished until the next merge. The schedule bounds
+  # that to a few days whoever or whatever merged.
+  #
+  # 04:00 UTC on Sunday, Tuesday and Thursday (0, 2 and 4) is four hours after
+  # the autobumper's 00:00 run, so its pull requests have opened and built by
+  # then. A run with nothing new to do is close to free: every layer is built
+  # on every run already and the per-layer GHA cache short-circuits a layer
+  # whose inputs have not changed, which reproduces the same digest and
+  # rewrites the tag to the same manifest.
+  schedule:
+    - cron: '0 4 * * 0,2,4'
   workflow_dispatch:
 # Serialize runs per ref so only one main build runs at a time.
-# Pushes to main queue and run in order (cancel-in-progress: false) to avoid
+# Pushes and scheduled runs on main queue and run in order
+# (cancel-in-progress: false) to avoid
 # cache races and older images overwriting newer ones. Pull request runs cancel
 # their own superseded runs to save resources.
 concurrency:
@@ -328,9 +347,14 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           REGISTRY: ghcr.io/kairos-io/hadron-layers
         run: |
+          # One file per arch, named after the digest the build job pushed.
+          sources=()
+          for digest in *; do
+            sources+=("$REGISTRY/$LAYER@sha256:$digest")
+          done
           docker buildx imagetools create \
             -t "$REGISTRY/$LAYER:$VERSION" \
-            $(printf "$REGISTRY/$LAYER@sha256:%s " *)
+            "${sources[@]}"
 
       - name: Inspect image
         env:

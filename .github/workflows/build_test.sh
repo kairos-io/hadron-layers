@@ -307,3 +307,32 @@ awk '
   exit 1
 }
 echo 'merge queue runs the gate only'
+
+# A merge publishes only if it starts a push run, and a merge made with the
+# GITHUB_TOKEN starts none. That is how the autoapprove.yml auto-merges left
+# every bumped layer unpublished (kairos-io/kairos#5406), and a push run that
+# fails or is cancelled leaves main just as unpublished. The schedule in
+# build.yml is what catches both. Nothing goes red when it is dropped: the pull
+# request build still passes and the images just stop moving. Assert it is
+# still there, three days a week.
+schedule_cron=$(awk '
+  /^on:/ { in_on = 1; next }
+  in_on && /^[^[:space:]#]/ { in_on = 0 }
+  in_on && /^  schedule:/ { armed = 1; next }
+  armed && /^    - cron:/ { print; exit }
+  armed && /^  [^[:space:]#]/ { exit }
+' "$workflow")
+
+if [[ -z "$schedule_cron" ]]; then
+  echo "build.yml has no schedule: trigger. A merge that starts no push run is then never built or published. See kairos-io/kairos#5406." >&2
+  exit 1
+fi
+
+cron=$(sed -E "s/^[[:space:]]*- cron:[[:space:]]*['\"]?([^'\"]*)['\"]?[[:space:]]*$/\1/" <<<"$schedule_cron")
+read -r -a cron_fields <<<"$cron"
+if [[ ${#cron_fields[@]} -ne 5 || ! "${cron_fields[4]}" =~ ^[0-6],[0-6],[0-6]$ ]]; then
+  echo "build.yml schedules main with '$cron'. It is meant to publish main three days a week (Sunday, Tuesday and Thursday), so the day-of-week field should list three days. See kairos-io/kairos#5406." >&2
+  exit 1
+fi
+
+echo 'build workflow schedule trigger pass'
