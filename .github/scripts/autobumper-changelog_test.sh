@@ -2,7 +2,7 @@
 #
 # Feeds sample staged diffs to parse_bumps in autobumper-changelog.rb and checks
 # the bumps it finds: ARG lines, docker-bake.hcl defaults, `uses:` lines and
-# `..._IMAGE:` lines.
+# `..._IMAGE:` lines. Also checks the name target_matcher reads off a target.
 
 set -euo pipefail
 
@@ -74,6 +74,13 @@ puts parse_bumps(hcl2, "docker-bake.hcl" => %w[HADRON_VERSION HADRON_KERNEL_SERI
 puts parse_bumps(actions).to_json
 puts parse_bumps(image).to_json
 puts display_name("LIBGPG_ERROR_VERSION"), display_name("AURORABOOT_IMAGE"), display_name("actions/checkout")
+
+# A file target rewriting an ARG line (open-vm-tools APORTS_VERSION) is looked
+# up by that ARG, like a dockerfile target.
+puts target_matcher("kind" => "dockerfile", "spec" => { "instruction" => { "keyword" => "ARG", "matcher" => "GLIB_VERSION" } })
+puts target_matcher("kind" => "hcl", "spec" => { "file" => "docker-bake.hcl", "path" => "variable.HADRON_VERSION.default" })
+puts target_matcher("kind" => "file", "spec" => { "file" => "open-vm-tools/Dockerfile", "matchpattern" => "(?m)^ARG APORTS_VERSION=.*$" })
+puts target_matcher("kind" => "file", "spec" => { "file" => ".github/workflows/build.yml", "matchpattern" => "AURORABOOT_IMAGE: .*" }).inspect
 ' "$SCRIPT")"
 
 want='[{"matcher":"FWUPD_VERSION","old_version":"2.0.1","new_version":"2.0.2"}]
@@ -84,7 +91,11 @@ want='[{"matcher":"FWUPD_VERSION","old_version":"2.0.1","new_version":"2.0.2"}]
 [{"matcher":"AURORABOOT_IMAGE","old_version":"v0.30.0","new_version":"v0.31.0"}]
 libgpg-error
 auroraboot
-actions/checkout'
+actions/checkout
+GLIB_VERSION
+HADRON_VERSION
+APORTS_VERSION
+nil'
 
 if [ "$out" = "$want" ]; then
   echo "ok"

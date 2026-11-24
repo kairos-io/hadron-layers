@@ -1,0 +1,19 @@
+# open-vm-tools ships no systemd unit, so the layer carries its own. It is
+# enabled statically from /usr/lib/systemd/system/multi-user.target.wants/,
+# which also works when the layer is merged as a system extension, and only
+# starts inside a VMware guest.
+[Unit]
+Description=Open Virtual Machine Tools (VMware Tools)
+Documentation=https://github.com/vmware/open-vm-tools
+ConditionVirtualization=vmware
+DefaultDependencies=no
+After=systemd-remount-fs.service systemd-tmpfiles-setup.service
+Before=shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+ExecStart=/usr/bin/vmtoolsd
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target
