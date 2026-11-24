@@ -28,6 +28,7 @@ jobs:
           - htop
           - smartmontools
           - qemu-guest-agent
+          - open-vm-tools
           - containerd-shim-wasmtime
           - containerd-shim-spin
           - golang

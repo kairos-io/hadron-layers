@@ -266,9 +266,10 @@ target "containerd-shim-spin" {
   tags      = ["${REGISTRY}/containerd-shim-spin:${TAG}"]
 }
 
-# A contributed recipe nobody has signed up to maintain yet, so it has no
-# updatecli manifest or autobumper row. Its versions are the ones Hadron pins
-# for its own cloud images, which exist in the hadron-sources cache.
+# Its versions are the ones Hadron pins for its own cloud images, and
+# updatecli.d/open-vm-tools.yaml moves them only once the hadron-sources cache
+# carries them. It stays beta until it has run in a real VMware guest: CI is not
+# one, so the test stage cannot reach the hypervisor.
 target "open-vm-tools" {
   context    = "open-vm-tools"
   dockerfile = "Dockerfile"
@@ -278,7 +279,7 @@ target "open-vm-tools" {
     HADRON_VERSION           = HADRON_VERSION
   }
   labels = merge(
-    common_labels("open-vm-tools", "VMware guest tools (vmtoolsd) for virtual machines", "community"),
+    common_labels("open-vm-tools", "VMware guest tools (vmtoolsd) for virtual machines", "official"),
     {
       "io.kairos.hadron.layer.status" = "beta"
     },

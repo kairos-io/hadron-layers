@@ -435,6 +435,22 @@ def changelog_lines(bump, token)
   lines
 end
 
+# The name a target bumps: the ARG of a dockerfile target, the variable of an
+# hcl target on `variable.NAME.default`, or the ARG a file target rewrites with
+# a `^ARG NAME=` matchpattern (used where a dockerfile target would also hit a
+# bare `ARG NAME` re-declared inside a stage).
+def target_matcher(target)
+  spec = target["spec"] || {}
+  matcher = spec.dig("instruction", "matcher")
+  return matcher unless matcher.to_s.empty?
+
+  if target["kind"] == "hcl" && spec["path"].to_s.match?(/\Avariable\.[^.]+\.default\z/)
+    spec["path"].split(".")[1]
+  elsif target["kind"] == "file" && (match = spec["matchpattern"].to_s.match(/\^ARG\s+([A-Z0-9_]+)=/))
+    match[1]
+  end
+end
+
 return unless __FILE__ == $PROGRAM_NAME
 
 manifest = YAML.safe_load(File.read(ENV.fetch("UPDATECLI_MANIFEST")), aliases: false)
@@ -444,13 +460,10 @@ sources = manifest.fetch("sources", {})
 target_lookup = {}
 hcl_vars = {}
 targets.each do |target_name, target|
-  spec = target["spec"] || {}
-  matcher = spec.dig("instruction", "matcher")
-  if matcher.to_s.empty? && target["kind"] == "hcl" && spec["path"].to_s.match?(/\Avariable\.[^.]+\.default\z/)
-    matcher = spec["path"].split(".")[1]
-    (hcl_vars[spec["file"]] ||= []) << matcher
-  end
+  matcher = target_matcher(target)
   next if matcher.to_s.empty?
+
+  (hcl_vars[target.dig("spec", "file")] ||= []) << matcher if target["kind"] == "hcl"
 
   target_lookup[matcher] = {
     "target_name" => target_name,

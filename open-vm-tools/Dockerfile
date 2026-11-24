@@ -20,8 +20,10 @@ ARG HADRON_TOOLCHAIN_VERSION
 ARG HADRON_VERSION
 # OPENVM_TOOLS_VERSION is the version Hadron pins in its Dockerfile, and the
 # others are the versions Hadron builds its own copies with, so all of them
-# exist in the source cache. LIBTIRPC_VERSION matches the libtirpc in the base
-# image, which is the copy vmtoolsd uses at runtime.
+# exist in the source cache. updatecli.d/open-vm-tools.yaml keeps every one of
+# them in step with Hadron's Dockerfile under the same name. LIBTIRPC_VERSION
+# matches the libtirpc in the base image, which is the copy vmtoolsd uses at
+# runtime.
 ARG OPENVM_TOOLS_VERSION=13.1.0
 ARG MSPACK_VERSION=1.12
 ARG GLIB_VERSION=2.90.1

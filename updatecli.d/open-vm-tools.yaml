@@ -1,0 +1,210 @@
+---
+name: open-vm-tools layer version updates
+
+# Every source of the layer comes from Hadron's source cache
+# (ghcr.io/kairos-io/hadron-sources), so the layer follows the versions Hadron
+# pins in its own Dockerfile (kairos-io/hadron main) under the same ARG names,
+# not the newest upstream releases. Hadron can pin a version before its
+# populate-sources workflow has published it, so the dockerimage conditions
+# check every tag in ghcr.io/kairos-io/hadron-sources first. A missing one skips
+# the whole run, and nothing moves until the cache has all of them.
+
+sources:
+  open_vm_tools:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG OPENVM_TOOLS_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG OPENVM_TOOLS_VERSION=(.+)$'
+          captureindex: 1
+    # open-vm-tools tags its releases stable-<version> on GitHub.
+    changelog:
+      url: https://github.com/vmware/open-vm-tools/releases/tag/stable-{new}
+      compare: https://github.com/vmware/open-vm-tools/compare/stable-{old}...stable-{new}
+
+  mspack:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG MSPACK_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG MSPACK_VERSION=(.+)$'
+          captureindex: 1
+
+  glib:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG GLIB_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG GLIB_VERSION=(.+)$'
+          captureindex: 1
+
+  pcre2:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG PCRE2_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG PCRE2_VERSION=(.+)$'
+          captureindex: 1
+
+  libffi:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG LIBFFI_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG LIBFFI_VERSION=(.+)$'
+          captureindex: 1
+
+  # The libtirpc the base image ships, which vmtoolsd uses at runtime.
+  libtirpc:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG LIBTIRPC_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG LIBTIRPC_VERSION=(.+)$'
+          captureindex: 1
+
+  # The Alpine aports tree with the musl patches and bsd-compat-headers.
+  aports:
+    kind: file
+    spec:
+      file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
+      matchpattern: '(?m)^ARG APORTS_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG APORTS_VERSION=(.+)$'
+          captureindex: 1
+
+conditions:
+  open_vm_tools_cached:
+    name: 'ghcr.io/kairos-io/hadron-sources/open-vm-tools:{{ source "open_vm_tools" }} is published'
+    kind: dockerimage
+    sourceid: open_vm_tools
+    spec:
+      image: ghcr.io/kairos-io/hadron-sources/open-vm-tools
+
+  mspack_cached:
+    name: 'ghcr.io/kairos-io/hadron-sources/mspack:{{ source "mspack" }} is published'
+    kind: dockerimage
+    sourceid: mspack
+    spec:
+      image: ghcr.io/kairos-io/hadron-sources/mspack
+
+  glib_cached:
+    name: 'ghcr.io/kairos-io/hadron-sources/glib:{{ source "glib" }} is published'
+    kind: dockerimage
+    sourceid: glib
+    spec:
+      image: ghcr.io/kairos-io/hadron-sources/glib
+
+  pcre2_cached:
+    name: 'ghcr.io/kairos-io/hadron-sources/pcre2:{{ source "pcre2" }} is published'
+    kind: dockerimage
+    sourceid: pcre2
+    spec:
+      image: ghcr.io/kairos-io/hadron-sources/pcre2
+
+  libffi_cached:
+    name: 'ghcr.io/kairos-io/hadron-sources/libffi:{{ source "libffi" }} is published'
+    kind: dockerimage
+    sourceid: libffi
+    spec:
+      image: ghcr.io/kairos-io/hadron-sources/libffi
+
+  libtirpc_cached:
+    name: 'ghcr.io/kairos-io/hadron-sources/libtirpc:{{ source "libtirpc" }} is published'
+    kind: dockerimage
+    sourceid: libtirpc
+    spec:
+      image: ghcr.io/kairos-io/hadron-sources/libtirpc
+
+  aports_cached:
+    name: 'ghcr.io/kairos-io/hadron-sources/aports:{{ source "aports" }} is published'
+    kind: dockerimage
+    sourceid: aports
+    spec:
+      image: ghcr.io/kairos-io/hadron-sources/aports
+
+targets:
+  open_vm_tools_version:
+    name: 'OPENVM_TOOLS_VERSION in open-vm-tools/Dockerfile updated to {{ source "open_vm_tools" }}'
+    kind: dockerfile
+    spec:
+      file: open-vm-tools/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: OPENVM_TOOLS_VERSION
+    sourceid: open_vm_tools
+
+  mspack_version:
+    name: 'MSPACK_VERSION in open-vm-tools/Dockerfile updated to {{ source "mspack" }}'
+    kind: dockerfile
+    spec:
+      file: open-vm-tools/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: MSPACK_VERSION
+    sourceid: mspack
+
+  glib_version:
+    name: 'GLIB_VERSION in open-vm-tools/Dockerfile updated to {{ source "glib" }}'
+    kind: dockerfile
+    spec:
+      file: open-vm-tools/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: GLIB_VERSION
+    sourceid: glib
+
+  pcre2_version:
+    name: 'PCRE2_VERSION in open-vm-tools/Dockerfile updated to {{ source "pcre2" }}'
+    kind: dockerfile
+    spec:
+      file: open-vm-tools/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: PCRE2_VERSION
+    sourceid: pcre2
+
+  libffi_version:
+    name: 'LIBFFI_VERSION in open-vm-tools/Dockerfile updated to {{ source "libffi" }}'
+    kind: dockerfile
+    spec:
+      file: open-vm-tools/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBFFI_VERSION
+    sourceid: libffi
+
+  libtirpc_version:
+    name: 'LIBTIRPC_VERSION in open-vm-tools/Dockerfile updated to {{ source "libtirpc" }}'
+    kind: dockerfile
+    spec:
+      file: open-vm-tools/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: LIBTIRPC_VERSION
+    sourceid: libtirpc
+
+  # A file target, not a dockerfile one: the downloader stage declares a bare
+  # `ARG APORTS_VERSION` to read the global value, and a dockerfile target
+  # would write the version into that line as well.
+  aports_version:
+    name: 'APORTS_VERSION in open-vm-tools/Dockerfile updated to {{ source "aports" }}'
+    kind: file
+    spec:
+      file: open-vm-tools/Dockerfile
+      matchpattern: '(?m)^ARG APORTS_VERSION=.*$'
+      replacepattern: 'ARG APORTS_VERSION={{ source "aports" }}'
+    sourceid: aports
