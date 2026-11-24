@@ -84,6 +84,7 @@ the raw image with your own keys, which is the only option under Trusted Boot.
 | `qemu-guest-agent` | `ghcr.io/kairos-io/hadron-layers/qemu-guest-agent` | official | QEMU guest agent (qemu-ga) for virtual machines |
 | `containerd-shim-wasmtime` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-wasmtime` | official | containerd shim for WebAssembly workloads on wasmtime (runwasi) |
 | `containerd-shim-spin` | `ghcr.io/kairos-io/hadron-layers/containerd-shim-spin` | official | containerd shim for Spin WebAssembly applications |
+| `open-vm-tools` | `ghcr.io/kairos-io/hadron-layers/open-vm-tools` | community | VMware guest tools (vmtoolsd) for virtual machines |
 
 Every layer declares who keeps its recipe working, as the OCI label
 `io.kairos.hadron.layer.support` on the published image and as the `support`

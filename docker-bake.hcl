@@ -88,7 +88,7 @@ function "common_labels" {
 }
 
 group "default" {
-  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop", "smartmontools", "qemu-guest-agent", "containerd-shim-wasmtime", "containerd-shim-spin"]
+  targets = ["git", "gpg", "fwupd", "drbd", "zfs", "tailscale", "htop", "smartmontools", "qemu-guest-agent", "containerd-shim-wasmtime", "containerd-shim-spin", "open-vm-tools"]
 }
 
 target "git" {
@@ -264,4 +264,25 @@ target "containerd-shim-spin" {
   labels    = common_labels("containerd-shim-spin", "containerd shim for Spin WebAssembly applications", "official")
   platforms = PLATFORMS
   tags      = ["${REGISTRY}/containerd-shim-spin:${TAG}"]
+}
+
+# A contributed recipe nobody has signed up to maintain yet, so it has no
+# updatecli manifest or autobumper row. Its versions are the ones Hadron pins
+# for its own cloud images, which exist in the hadron-sources cache.
+target "open-vm-tools" {
+  context    = "open-vm-tools"
+  dockerfile = "Dockerfile"
+  target     = "default"
+  args = {
+    HADRON_TOOLCHAIN_VERSION = HADRON_VERSION
+    HADRON_VERSION           = HADRON_VERSION
+  }
+  labels = merge(
+    common_labels("open-vm-tools", "VMware guest tools (vmtoolsd) for virtual machines", "community"),
+    {
+      "io.kairos.hadron.layer.status" = "beta"
+    },
+  )
+  platforms = PLATFORMS
+  tags      = ["${REGISTRY}/open-vm-tools:${TAG}"]
 }
