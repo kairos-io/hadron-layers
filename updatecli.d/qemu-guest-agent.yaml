@@ -13,8 +13,11 @@ sources:
     kind: file
     spec:
       file: https://raw.githubusercontent.com/kairos-io/hadron/main/Dockerfile
-      matchpattern: '(?m)^ARG QEMU_AGENT_VERSION=(.*)$'
-      replacepattern: '$1'
+      matchpattern: '(?m)^ARG QEMU_AGENT_VERSION=.*$'
+    transformers:
+      - findsubmatch:
+          pattern: '^ARG QEMU_AGENT_VERSION=(.+)$'
+          captureindex: 1
 
 targets:
   qemu_version:
