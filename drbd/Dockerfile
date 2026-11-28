@@ -76,7 +76,7 @@ RUN kver=$(cat /usr/share/kernel-misc/kernel-release) && \
 # drbdadm / drbdsetup / drbdmeta for managing the DRBD 9 module. The LINBIT
 # release tarball ships a pre-generated ./configure.
 FROM ghcr.io/kairos-io/hadron-toolchain:${HADRON_TOOLCHAIN_VERSION} AS utils-builder
-ARG DRBD_UTILS_VERSION=9.36.0
+ARG DRBD_UTILS_VERSION=9.36.1
 WORKDIR /build
 RUN curl -fL "https://pkg.linbit.com/downloads/drbd/utils/drbd-utils-${DRBD_UTILS_VERSION}.tar.gz" -o drbd-utils.tar.gz
 RUN tar -xf drbd-utils.tar.gz && rm drbd-utils.tar.gz && mv drbd-utils-* drbd-utils
