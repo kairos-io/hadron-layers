@@ -18,7 +18,7 @@ RUN curl -fL https://github.com/fwupd/fwupd/releases/download/${FWUPD_VERSION}/f
 # (2.86.x, 2.88.x, ...); odd minor versions are dev releases. Pin to the
 # latest stable series and derive the directory segment from the version
 # so future bumps do not have to touch the URL.
-ARG GLIB_VERSION=2.90.1
+ARG GLIB_VERSION=2.90.2
 RUN GLIB_SERIES="${GLIB_VERSION%.*}" && \
     curl -fL "https://download.gnome.org/sources/glib/${GLIB_SERIES}/glib-${GLIB_VERSION}.tar.xz" -o glib.tar.xz
 
@@ -48,7 +48,7 @@ RUN curl -fL https://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.
 ARG SQLITE3_VERSION=3.54.1
 RUN curl -fL https://github.com/sqlite/sqlite/archive/refs/tags/version-${SQLITE3_VERSION}.tar.gz -o sqlite3.tar.gz
 
-ARG LIBFFI_VERSION=3.8.1
+ARG LIBFFI_VERSION=3.8.2
 RUN curl -fL https://github.com/libffi/libffi/releases/download/v${LIBFFI_VERSION}/libffi-${LIBFFI_VERSION}.tar.gz -o libffi.tar.gz
 
 # libucontext provides POSIX ucontext functions absent from musl libc.
