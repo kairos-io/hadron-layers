@@ -10,7 +10,7 @@
 # HADRON_TOOLCHAIN_VERSION and HADRON_VERSION, which this file sets to the same
 # value.
 variable "HADRON_VERSION" {
-  default = "v0.6.7"
+  default = "v0.7.0"
 }
 
 # HADRON_KERNEL_SERIES is the kernel series the HADRON_VERSION release ships
